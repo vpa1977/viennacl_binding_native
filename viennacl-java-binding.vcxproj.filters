@@ -36,6 +36,9 @@
     <ClInclude Include="merge_sort.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="morton_code.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="stdafx.cpp">
@@ -57,6 +60,12 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="merge_sort_util.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="morton.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="clogs_sort.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

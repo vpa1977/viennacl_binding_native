@@ -107,6 +107,44 @@ JNIEXPORT void JNICALL Java_org_viennacl_binding_Buffer_native_1copy
 	}
 }
 
+JNIEXPORT void JNICALL Java_org_viennacl_binding_Buffer_fill
+(JNIEnv * env, jobject obj, jbyte b)
+{
+	jlong size = GetByteSize(env, obj);
+	native_buffer * src = jni_setup::GetNativeImpl<native_buffer>(env, obj, "org/viennacl/binding/Buffer");
+	int mem_type = GetMemType(env, obj);
+#ifdef VIENNACL_WITH_OPENCL
+	if (mem_type == JAVA_BIND_OPENCL_MEMORY)
+	{
+		static jclass container_class = env->GetObjectClass(obj);
+		static jfieldID context_field = env->GetFieldID(container_class, "m_context", "Lorg/viennacl/binding/Context;");
+		static jfieldID queue_field = env->GetFieldID(container_class, "m_queue", "Lorg/viennacl/binding/Queue;");
+
+		jobject queue_object = env->GetObjectField(obj, queue_field);
+
+		viennacl::context* ctx = GetContext(env, obj, context_field);
+		cl_context raw_context = ctx->opencl_context().handle().get();
+		struct _cl_command_queue* queue = 0;
+		if (queue_object != 0)
+		{
+			queue = jni_setup::GetNativeImpl<_cl_command_queue>(env, queue_object, "org/viennacl/binding/Queue");
+		}
+		else
+		{
+			queue = ctx->opencl_context().get_queue().handle().get();
+		}
+
+		if (clEnqueueFillBuffer(queue, src->m_data, &b, 1, 0, size, 0, 0, 0))
+			throw std::runtime_error("Unable to copy buffer");
+
+	}
+	else
+#endif
+	{
+		memset(src->m_cpu_data, b, size);
+	}
+}
+
 
 /*
 * Class:     org_viennacl_binding_Buffer
@@ -263,6 +301,7 @@ JNIEXPORT void JNICALL Java_org_viennacl_binding_Buffer_allocate
 		viennacl::context* ctx = GetContext(env, obj, context_field);
 		cl_context raw_context = ctx->opencl_context().handle().get();
 		ptr->m_data_host_ptr = new uint8_t[size];
+		memset(ptr->m_data_host_ptr, 0, size);
 		ptr->m_data = clCreateBuffer(raw_context, (GetMemMode(GetBufferMode(env,obj))) | CL_MEM_USE_HOST_PTR, size, ptr->m_data_host_ptr, &err);
 		if (ptr->m_data == 0)
 		{

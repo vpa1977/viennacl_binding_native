@@ -18,7 +18,9 @@
 #include "org_moa_opencl_util_DoubleMergeSort.h"
 
 
+
 #define DOUBLE_MERGE_SORT "org/moa/opencl/util/DoubleMergeSort"
+
 
 /*
 * Class:     org_moa_opencl_util_DoubleMergeSort
