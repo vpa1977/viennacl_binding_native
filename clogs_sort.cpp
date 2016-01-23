@@ -13,8 +13,10 @@
 #include "org_viennacl_binding_Buffer.h"
 #include "org_viennacl_binding_Kernel.h"
 #include "clogs/radixsort_varkey.h"
+#include "clogs/radixsort.h"
 #include "org_moa_opencl_util_CLogsSort.h"
 
+/*
 struct clogs_sort
 {
 	clogs_sort(const cl::Context& ctx, const cl::Device& device)
@@ -46,6 +48,38 @@ struct clogs_sort
 
 private:
 	clogs::RadixsortVarKey* sort_;
+};
+*/
+
+struct clogs_sort
+{
+	clogs_sort(const cl::Context& ctx, const cl::Device& device)
+	{
+		clogs::RadixsortProblem problem;
+		problem.setKeyType(clogs::Type(clogs::TYPE_UINT, 1));
+		problem.setValueType(clogs::Type(clogs::TYPE_UINT));
+		sort_ = new clogs::Radixsort(ctx, device, problem);
+	}
+	virtual ~clogs_sort()
+	{
+		delete sort_;
+	}
+
+	void sort(cl::CommandQueue& queue, cl::Buffer& order_keys, cl::Buffer& bkeys,
+		cl::Buffer& values,
+		size_t b_key_size,
+
+		size_t len)
+	{
+		sort_->enqueue(
+			queue,
+			order_keys,
+			values,
+			len);
+	}
+
+private:
+	clogs::Radixsort* sort_;
 };
 
 

@@ -116,6 +116,34 @@ JNIEXPORT void JNICALL Java_org_viennacl_binding_Kernel_invoke___3Ljava_lang_Obj
 	throw std::runtime_error("Not implemented");
 }
 
+
+/*
+* Class:     org_viennacl_binding_Kernel
+* Method:    set_arg
+* Signature: (ID)V
+*/
+JNIEXPORT void JNICALL Java_org_viennacl_binding_Kernel_set_1arg__ID
+(JNIEnv * env, jobject obj, jint pos, jdouble val)
+{
+	viennacl::kernel* ptr = jni_setup::GetNativeImpl<viennacl::kernel>(env, obj, KERNEL_CLASS);
+	ptr->arg(pos, val);
+}
+
+/*
+* Class:     org_viennacl_binding_Kernel
+* Method:    set_arg
+* Signature: (IF)V
+*/
+JNIEXPORT void JNICALL Java_org_viennacl_binding_Kernel_set_1arg__IF
+(JNIEnv * env, jobject obj, jint pos, jfloat val)
+{
+	viennacl::kernel* ptr = jni_setup::GetNativeImpl<viennacl::kernel>(env, obj, KERNEL_CLASS);
+	ptr->arg(pos, val);
+}
+
+
+
+
 /*
 * Class:     org_viennacl_binding_Kernel
 * Method:    invoke
@@ -126,4 +154,5 @@ JNIEXPORT void JNICALL Java_org_viennacl_binding_Kernel_invoke__
 {
 	viennacl::kernel* ptr = jni_setup::GetNativeImpl<viennacl::kernel>(env, obj, KERNEL_CLASS);
 	ptr->enqueue();
+	
 }

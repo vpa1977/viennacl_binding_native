@@ -181,7 +181,7 @@ JNIEXPORT void JNICALL Java_org_viennacl_binding_Buffer_map__I
 
 		cl_map_flags flag_mode = GetMode(mode);
 		cl_int err;
-		ptr->m_cpu_data = clEnqueueMapBuffer(queue, ptr->m_data, TRUE, flag_mode, 0, size, 0, 0, 0, &err);
+		ptr->m_cpu_data = clEnqueueMapBuffer(queue, ptr->m_data, true, flag_mode, 0, size, 0, 0, 0, &err);
 		if (err == CL_SUCCESS)
 			SetCPUMemoryField(env, obj, ptr->m_cpu_data);
 		else
@@ -230,7 +230,7 @@ JNIEXPORT void JNICALL Java_org_viennacl_binding_Buffer_map__IJJ
 
 		cl_map_flags flag_mode = GetMode(mode);
 		cl_int err;
-		ptr->m_cpu_data = clEnqueueMapBuffer(queue, ptr->m_data, TRUE, flag_mode, offset, size, 0, 0, 0, &err);
+		ptr->m_cpu_data = clEnqueueMapBuffer(queue, ptr->m_data, true, flag_mode, offset, size, 0, 0, 0, &err);
 		if (err == CL_SUCCESS)
 			SetCPUMemoryField(env, obj, ptr->m_cpu_data);
 		else

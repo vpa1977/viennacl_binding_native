@@ -185,6 +185,7 @@
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
       </PrecompiledHeader>
     </ClCompile>
+    <ClCompile Include="fjlt_impl.cpp" />
     <ClCompile Include="kernel.cpp" />
     <ClCompile Include="merge_sort_util.cpp" />
     <ClCompile Include="morton.cpp" />

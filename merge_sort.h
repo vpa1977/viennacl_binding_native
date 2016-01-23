@@ -5,6 +5,11 @@
 #include <stdint.h>
 #include "viennacl/context.hpp"
 #include "viennacl/vector.hpp"
+#include "viennacl/abstract_kernel.hpp"
+
+#ifdef VIENNACL_WITH_HSA
+#include "viennacl/hsa/local_mem.hpp"
+#endif
 
 
 struct sort_value_types {
@@ -12,16 +17,20 @@ struct sort_value_types {
 	std::string type() {
 		return T::unimplemented;
 	}
-	template<>
-	std::string type<uint32_t>() { return "#define VALUE_TYPE uint\n"; }
-	template<>
-	std::string type<uint64_t>() { return "#define VALUE_TYPE long\n"; }
-	template<>
-	std::string type<float>() { return "#define VALUE_TYPE float\n"; }
-	template<>
-	std::string type<double>() { return "#define VALUE_TYPE double\n"; }
 
 };
+template<>
+std::string sort_value_types::type<int>() { return "#define VALUE_TYPE int\n"; }
+template<>
+std::string sort_value_types::type<uint32_t>() { return "#define VALUE_TYPE uint\n"; }
+template<>
+std::string sort_value_types::type<uint64_t>() { return "#define VALUE_TYPE long\n"; }
+template<>
+std::string sort_value_types::type<float>() { return "#define VALUE_TYPE float\n"; }
+template<>
+std::string sort_value_types::type<double>() { return "#define VALUE_TYPE double\n"; }
+
+
 
 template <typename basic_type>
 std::string generate_merge_sort_kernel()
@@ -72,9 +81,14 @@ std::string generate_merge_sort_kernel()
 		<< "	__local uint* indices," << std::endl
 		<< "	__local uint* indices2" << std::endl
 		<< "   " << std::endl
+///		<< "   __global uint* offsets" << std::endl // local param bug in HSA impl
 		<< "){" << std::endl
 
 		<< "  { " << std::endl
+		<< "   __local VALUE_TYPE lds[256];" << std::endl
+		<< "   __local VALUE_TYPE lds2[256];" << std::endl
+		<< "   __local uint indices[256];" << std::endl
+		<< "   __local uint indices2[256];" << std::endl
 		<< " 	size_t gloId = get_global_id( 0 ); " << std::endl
 		<< " 	size_t groId = get_group_id( 0 ); " << std::endl
 		<< " 	size_t locId = get_local_id( 0 ); " << std::endl
@@ -261,12 +275,12 @@ std::string generate_bitonic_sort_kernel()
 	str << merge_sort_value_type.type<basic_type>() << std::endl
 		<< "" << std::endl
 		<< "/**********************************************************************" << std::endl
-		<< "Copyright ©2014 Advanced Micro Devices, Inc. All rights reserved." << std::endl
+		<< "Copyright ï¿½2014 Advanced Micro Devices, Inc. All rights reserved." << std::endl
 		<< "" << std::endl
 		<< "Redistribution and use in source and binary forms, with or without modification, are permitted provided that the following conditions are met:" << std::endl
 		<< "" << std::endl
-		<< "•	Redistributions of source code must retain the above copyright notice, this list of conditions and the following disclaimer." << std::endl
-		<< "•	Redistributions in binary form must reproduce the above copyright notice, this list of conditions and the following disclaimer in the documentation and/or" << std::endl
+		<< "ï¿½	Redistributions of source code must retain the above copyright notice, this list of conditions and the following disclaimer." << std::endl
+		<< "ï¿½	Redistributions in binary form must reproduce the above copyright notice, this list of conditions and the following disclaimer in the documentation and/or" << std::endl
 		<< " other materials provided with the distribution." << std::endl
 		<< "" << std::endl
 		<< "THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS \"AS IS\" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED" << std::endl
@@ -488,9 +502,9 @@ sort provided vector and return offsets into original vector
 template<typename basic_type>
 struct merge_sorter
 {
-	viennacl::ocl::kernel local_kernel;
-	viennacl::ocl::kernel global_kernel;
-	viennacl::ocl::kernel init_offsets_kernel;
+	viennacl::kernel* local_kernel;
+	viennacl::kernel* global_kernel;
+	viennacl::kernel* init_offsets_kernel;
 	const viennacl::context& m_context;
 	size_t num_groups;
 
@@ -498,29 +512,56 @@ struct merge_sorter
 
 	merge_sorter(const viennacl::context& ctx) : m_context(ctx)
 	{
-		viennacl::ocl::context& ocl_ctx = const_cast<viennacl::ocl::context&>(ctx.opencl_context());
-		if (!ocl_ctx.has_program("merge_sort"))
+
+		if (ctx.memory_type() == viennacl::OPENCL_MEMORY)
 		{
-			std::string program_text = generate_merge_sort_kernel<basic_type>();
-			ocl_ctx.add_program(program_text, std::string("merge_sort"));
+#ifdef VIENNACL_WITH_OPENCL
+			viennacl::ocl::context& ocl_ctx = const_cast<viennacl::ocl::context&>(ctx.opencl_context());
+			if (!ocl_ctx.has_program("merge_sort"))
+			{
+				std::string program_text = generate_merge_sort_kernel<basic_type>();
+				ocl_ctx.add_program(program_text, std::string("merge_sort"));
+			}
+			local_kernel = & viennacl::ocl::current_context().get_kernel("merge_sort", "local_merge");
+			global_kernel = & viennacl::ocl::current_context().get_kernel("merge_sort", "global_merge");
+			init_offsets_kernel = & viennacl::ocl::current_context().get_kernel("merge_sort", "init_offsets");
+			num_groups = ctx.opencl_context().current_device().max_compute_units() * 4 + 1;
+#endif
 		}
-		local_kernel = viennacl::ocl::current_context().get_kernel("merge_sort", "local_merge");
-		global_kernel = viennacl::ocl::current_context().get_kernel("merge_sort", "global_merge");
-		init_offsets_kernel = viennacl::ocl::current_context().get_kernel("merge_sort", "init_offsets");
-		num_groups = ctx.opencl_context().current_device().max_compute_units() * 4 + 1;
+		if (ctx.memory_type() == viennacl::HSA_MEMORY)
+		{
+#ifdef VIENNACL_WITH_HSA
+			viennacl::hsa::context& ocl_ctx = const_cast<viennacl::hsa::context&>(ctx.hsa_context());
+			if (!ocl_ctx.has_program("merge_sort"))
+			{
+				std::string program_text = generate_merge_sort_kernel<basic_type>();
+				ocl_ctx.add_program(program_text, std::string("merge_sort"));
+			}
+			local_kernel =& viennacl::hsa::current_context().get_kernel("merge_sort", "local_merge");
+			global_kernel = &viennacl::hsa::current_context().get_kernel("merge_sort", "global_merge");
+			init_offsets_kernel =& viennacl::hsa::current_context().get_kernel("merge_sort", "init_offsets");
+			num_groups = ctx.hsa_context().current_device().max_compute_units() * 4 + 1;
+#endif
+
+		}
+
+
+
 	}
 
 
 	void merge_sort(viennacl::vector<basic_type>& in, viennacl::vector<basic_type>& tmp, 
 		viennacl::vector<unsigned int>& src, 
-	  viennacl::vector<unsigned int>& dst)
+	  viennacl::vector<unsigned int>& dst, int max_size =0)
 	{
 
+		if (max_size == 0)
+			max_size = in.size();
 		int wg_size = 256;
 
 
 		size_t localRange = wg_size;
-		size_t globalRange = in.size();
+		size_t globalRange = max_size;
 		size_t modlocalRange = globalRange & (localRange - 1);
 		if (modlocalRange > 0)
 		{
@@ -528,21 +569,45 @@ struct merge_sorter
 			globalRange += localRange;
 		}
 
-		local_kernel.local_work_size(0, wg_size);
-		global_kernel.local_work_size(0, wg_size);
-		init_offsets_kernel.local_work_size(0, wg_size);
-		init_offsets_kernel.global_work_size(0, wg_size* num_groups);
+		local_kernel->local_work_size(0, wg_size);
+		global_kernel->local_work_size(0, wg_size);
+		//init_offsets_kernel->local_work_size(0, wg_size);
+		//init_offsets_kernel->global_work_size(0, wg_size* num_groups);
 
-		local_kernel.global_work_size(0, globalRange);
-		global_kernel.global_work_size(0, globalRange);
+		local_kernel->global_work_size(0, globalRange);
+		global_kernel->global_work_size(0, globalRange);
 
 
 		cl_uint size = (cl_uint)src.size();
-		viennacl::ocl::enqueue(init_offsets_kernel(size, src));
+	//	init_offsets_kernel->operator ()(size, src.handle()).enqueue();
 
-		viennacl::ocl::enqueue(local_kernel((cl_uint)in.size(), in, src, viennacl::ocl::local_mem(wg_size * sizeof(cl_double)), viennacl::ocl::local_mem(wg_size * sizeof(cl_double)),
-			viennacl::ocl::local_mem(wg_size * sizeof(cl_uint)), viennacl::ocl::local_mem(wg_size * sizeof(cl_uint))));
-		if (in.size() <= localRange)
+		local_kernel->arg(0,(cl_uint)max_size );
+		local_kernel->arg(1,in.handle());
+		local_kernel->arg(2, src.handle());
+		// local arg bug ?
+		if (viennacl::traits::context(in).memory_type() == viennacl::OPENCL_MEMORY)
+		{
+			((viennacl::ocl::kernel*)local_kernel)->arg(3, viennacl::ocl::local_mem(wg_size * sizeof(cl_double)));
+			((viennacl::ocl::kernel*)local_kernel)->arg(4,viennacl::ocl::local_mem(wg_size * sizeof(cl_double)));
+			((viennacl::ocl::kernel*)local_kernel)->arg(5,viennacl::ocl::local_mem(wg_size * sizeof(cl_uint)));
+			((viennacl::ocl::kernel*)local_kernel)->arg(6,viennacl::ocl::local_mem(wg_size * sizeof(cl_uint)));
+		}
+		else if (viennacl::traits::context(in).memory_type() == viennacl::HSA_MEMORY)
+		{
+#ifdef VIENNACL_WITH_HSA
+			((viennacl::hsa::kernel*)local_kernel)->arg(3, viennacl::hsa::local_mem(wg_size * sizeof(cl_double)));
+			((viennacl::hsa::kernel*)local_kernel)->arg(4,viennacl::hsa::local_mem(wg_size * sizeof(cl_double)));
+			((viennacl::hsa::kernel*)local_kernel)->arg(5,viennacl::hsa::local_mem(wg_size * sizeof(cl_uint)));
+			((viennacl::hsa::kernel*)local_kernel)->arg(6,viennacl::hsa::local_mem(wg_size * sizeof(cl_uint)));
+#endif
+		}
+		else
+			throw std::runtime_error("Unsupported memory type");
+
+
+
+		local_kernel->enqueue();
+		if (max_size <= localRange)
 			return;
 
 		// An odd number of elements requires an extra merge pass to sort
@@ -550,14 +615,14 @@ struct merge_sorter
 		// Calculate the log2 of vecSize, taking into account our block size
 		// from kernel 1 is 256
 		// this is how many merge passes we want
-		size_t log2BlockSize = (in.size() >> 8);
+		size_t log2BlockSize = (max_size >> 8);
 
 		for (; log2BlockSize > 1; log2BlockSize >>= 1) {
 			++numMerges;
 		}
 		// Check to see if the input vector size is a power of 2, if not we will
 		// need last merge pass
-		size_t vecPow2 = (in.size() & (in.size() - 1));
+		size_t vecPow2 = (max_size & (max_size - 1));
 		numMerges += vecPow2 > 0 ? 1 : 0;
 		
 		for (int pass = 1; pass <= numMerges; ++pass) {
@@ -565,11 +630,22 @@ struct merge_sorter
 
 
 			if ((pass & 0x1) > 0) {
-				viennacl::ocl::enqueue(global_kernel((cl_uint)in.size(), (cl_uint)srcLogicalBlockSize, in, tmp, src, dst));
+				global_kernel->arg(0,(cl_uint)max_size );
+				global_kernel->arg(1, (cl_uint)srcLogicalBlockSize);
+				global_kernel->arg(2, in.handle());
+				global_kernel->arg(3, tmp.handle());
+				global_kernel->arg(4, src.handle());
+				global_kernel->arg(5, dst.handle());
 			}
 			else {
-				viennacl::ocl::enqueue(global_kernel((cl_uint)in.size(), (cl_uint)srcLogicalBlockSize, tmp, in, dst, src));
+				global_kernel->arg(0,(cl_uint)max_size );
+				global_kernel->arg(1, (cl_uint)srcLogicalBlockSize);
+				global_kernel->arg(2, tmp.handle());
+				global_kernel->arg(3, in.handle());
+				global_kernel->arg(4, dst.handle());
+				global_kernel->arg(5, src.handle());
 			}
+			global_kernel->enqueue();
 
 		}
 		/*std::vector<int> test_tmp(tmp.size());
