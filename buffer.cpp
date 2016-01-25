@@ -103,6 +103,9 @@ JNIEXPORT void JNICALL Java_org_viennacl_binding_Buffer_native_1copy
 	else
 #endif
 	{
+		if (src->m_data || dst->m_data)
+			throw std::runtime_error("Memory Corruption!");
+
 		memcpy(dst->m_cpu_data, src->m_cpu_data, size);
 	}
 }
@@ -141,6 +144,9 @@ JNIEXPORT void JNICALL Java_org_viennacl_binding_Buffer_fill
 	else
 #endif
 	{
+		if (src->m_data)
+			throw std::runtime_error("Memory Corruption!");
+
 		memset(src->m_cpu_data, b, size);
 	}
 }
@@ -191,6 +197,8 @@ JNIEXPORT void JNICALL Java_org_viennacl_binding_Buffer_map__I
 	else
 #endif
 	{
+		if (ptr->m_data)
+			throw std::runtime_error("Memory Corruption!");
 		SetCPUMemoryField(env, obj, ptr->m_cpu_data );
 	}
 
@@ -239,6 +247,8 @@ JNIEXPORT void JNICALL Java_org_viennacl_binding_Buffer_map__IJJ
 	else
 #endif
 	{
+		if (ptr->m_data)
+			throw std::runtime_error("Memory Corruption!");
 		SetCPUMemoryField(env, obj, ((char*)ptr->m_cpu_data)+offset);
 	}
 
@@ -270,6 +280,8 @@ JNIEXPORT void JNICALL Java_org_viennacl_binding_Buffer_commit
 	else
 #endif
 	{
+		if (ptr->m_data)
+			throw std::runtime_error("Memory Corruption!");
 		SetCPUMemoryField(env, obj, 0);
 	}
 
@@ -314,7 +326,12 @@ JNIEXPORT void JNICALL Java_org_viennacl_binding_Buffer_allocate
 #endif
 	case JAVA_BIND_MAIN_MEMORY:
 	case JAVA_BIND_HSA_MEMORY:
+	{
 		ptr->m_cpu_data = new uint8_t[size];
+#ifdef VIENNACL_DEBUG_KERNEL
+		memset(ptr->m_cpu_data, 0, size);
+#endif
+	}
 		break;
 	default:
 		throw std::runtime_error("Unsupported memory type");

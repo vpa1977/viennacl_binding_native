@@ -17,6 +17,15 @@
 
 #define KERNEL_CLASS "org/viennacl/binding/Kernel"
 
+inline int GetMemType(JNIEnv * env, jobject obj)
+{
+	static jclass buffer_class = env->FindClass("org/viennacl/binding/Buffer");
+	static jfieldID memory_class_field = env->GetFieldID(buffer_class, "m_memory_type", "I");
+	jint mem_type = env->GetIntField(obj, memory_class_field);
+	return mem_type;
+}
+
+
 /*
 * Class:     org_viennacl_binding_Kernel
 * Method:    set_global_size
@@ -59,6 +68,12 @@ JNIEXPORT void JNICALL Java_org_viennacl_binding_Kernel_set_1arg__ILorg_viennacl
 #ifdef VIENNACL_WITH_OPENCL
 	if (buffer->m_data)
 	{
+#ifdef VIENNACL_DEBUG_KERNEL
+		if (GetMemType(env, param) != JAVA_BIND_OPENCL_MEMORY)
+		{
+			throw std::runtime_error("Memory Corruption");
+		}
+#endif
 		viennacl::vector<uint8_t> proxy(buffer->m_data, size);
 		ptr->arg(pos, proxy.handle());
 	}

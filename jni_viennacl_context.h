@@ -29,7 +29,10 @@ struct native_buffer
 		}
 #endif
 		if (m_cpu_data)
+		{
 			delete m_cpu_data;
+			m_cpu_data = 0;
+		}
 
 	}
 
