@@ -1,4 +1,4 @@
-﻿Build started 24/01/2016 2:17:58 a.m..
+﻿Build started 25/01/2016 10:29:17 p.m..
      1>Project "C:\master_in_progress\viennacl-java-binding\viennacl-java-binding\viennacl-java-binding.vcxproj" on node 2 (Build target(s)).
      1>ClCompile:
          H:\VS1025\VC\bin\x86_amd64\CL.exe /c /IC:\master_in_progress\boost\boost_1_58_0 /I"C:\master_in_progress\java\viennacl-binding" /I"C:\Program Files\Java\jdk1.8.0_45\include\win32" /I"C:\Program Files\Java\jdk1.8.0_45\include" /I"C:\Program Files (x86)\AMD APP SDK\3.0-0-Beta\include" /I"C:\master_in_progress\viennacl-dev" /I"C:\master_in_progress\clogs-code\include" /ZI /nologo /W3 /WX- /Od /D _DEBUG /D _WINDOWS /D _USRDLL /D VIENNACLJAVABINDING_EXPORTS /D VIENNACL_WITH_OPENCL /D VIENNACL_WITH_OPENCL20 /D CL_USE_DEPRECATED_OPENCL_2_0_APIS /D CLOGS_DLL_DO_STATIC /D _WINDLL /D _UNICODE /D UNICODE /Gm /EHsc /RTC1 /MDd /GS /fp:precise /Zc:wchar_t /Zc:forScope /Zc:inline /Fo"x64\Debug\\" /Fd"x64\Debug\vc140.pdb" /Gd /TP /errorReport:prompt buffer.cpp clogs_sort.cpp fjlt_impl.cpp kernel.cpp merge_sort_util.cpp morton.cpp stdafx.cpp utils.cpp "viennacl-java-binding.cpp"
@@ -93,4 +93,4 @@
 
 Build succeeded.
 
-Time Elapsed 00:01:02.92
+Time Elapsed 00:00:34.51

@@ -151,6 +151,33 @@ JNIEXPORT void JNICALL Java_org_viennacl_binding_Context_finishDefaultQueue
 			throw std::runtime_error("Unsupported context type");
 }
 
+
+/*
+* Class:     org_viennacl_binding_Context
+* Method:    finishDefaultQueue
+* Signature: ()V
+*/
+JNIEXPORT void JNICALL Java_org_viennacl_binding_Context_submitBarrier
+(JNIEnv * env, jobject obj)
+{
+	viennacl::context* ctx = jni_setup::GetNativeImpl<viennacl::context>(env, obj, "org/viennacl/binding/Context");
+	if (ctx->memory_type() == viennacl::OPENCL_MEMORY)
+	{
+#ifdef VIENNACL_WITH_OPENCL
+		// do nothing OPENCL does not need it
+#endif
+	}
+	else
+		if (ctx->memory_type() == viennacl::HSA_MEMORY)
+		{
+#ifdef VIENNACL_WITH_HSA
+			const_cast<viennacl::hsa::context&>(ctx->hsa_context()).get_queue().submit_barrier();
+#endif
+		}
+		else
+			throw std::runtime_error("Unsupported context type");
+}
+
 /*
 * Class:     org_viennacl_binding_Context
 * Method:    removeProgram

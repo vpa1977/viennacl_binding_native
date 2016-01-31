@@ -103,6 +103,7 @@ JNIEXPORT void JNICALL Java_org_viennacl_binding_Buffer_native_1copy
 	else
 #endif
 	{
+
 		if (src->m_data || dst->m_data)
 			throw std::runtime_error("Memory Corruption!");
 
