@@ -65,9 +65,6 @@
     <ClCompile Include="morton.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="clogs_sort.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="fjlt_impl.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>

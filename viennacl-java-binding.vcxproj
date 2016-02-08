@@ -170,7 +170,6 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="buffer.cpp" />
-    <ClCompile Include="clogs_sort.cpp" />
     <ClCompile Include="dllmain.cpp">
       <CompileAsManaged Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">false</CompileAsManaged>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
