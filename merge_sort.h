@@ -3,8 +3,11 @@
 
 #include <sstream>
 #include <stdint.h>
+#include <limits>
 #include "viennacl/context.hpp"
 #include "viennacl/vector.hpp"
+#include "viennacl/vector_proxy.hpp"
+#include "viennacl/range.hpp"
 #include "viennacl/abstract_kernel.hpp"
 
 #ifdef VIENNACL_WITH_HSA
@@ -397,23 +400,11 @@ template<typename basic_type>
 struct bitonic_sorter
 {
 	int length;
-	viennacl::vector<unsigned int> src;
 	viennacl::ocl::kernel kernel;
 	viennacl::ocl::kernel init_offsets_kernel;
 
-	bitonic_sorter(int size, const viennacl::context& ctx)
+	bitonic_sorter(const viennacl::context& ctx)
 	{
-		int v = size;
-		// get next power of 2 
-		v--;
-		v |= v >> 1;
-		v |= v >> 2;
-		v |= v >> 4;
-		v |= v >> 8;
-		v |= v >> 16;
-		v++;
-		length = v;
-		src = viennacl::vector<unsigned int>(length, ctx);
 		static bool init = false;
 		viennacl::ocl::context& ocl_ctx = const_cast<viennacl::ocl::context&>(ctx.opencl_context());
 		if (!init)
@@ -427,20 +418,31 @@ struct bitonic_sorter
 		init_offsets_kernel = ocl_ctx.get_kernel("bitonic_sort", "init_offsets");
 	}
 
-	viennacl::vector<unsigned int> bitonic_sort(viennacl::vector<basic_type>& in)
+	viennacl::vector<unsigned int> bitonic_sort(viennacl::vector<basic_type>& in, viennacl::vector<unsigned int>& src, size_t max_size)
 	{
+		int v = max_size;
+		// get next power of 2 
+		v--;
+		v |= v >> 1;
+		v |= v >> 2;
+		v |= v >> 4;
+		v |= v >> 8;
+		v |= v >> 16;
+		v++;
+		length = v;
 
 		int orig_size = in.size();
 		viennacl::vector_range< viennacl::vector<basic_type> > fill_range(in, viennacl::range(in.size(), length));
 		in.resize(length, true);
+#undef max
 		viennacl::linalg::vector_assign(fill_range, std::numeric_limits<basic_type>::max());
 
 		static int num_groups = 40;
 		static int wg_size = 256;
-		viennacl::context& the_context = viennacl::traits::context(in);
-		viennacl::ocl::context& ctx = const_cast<viennacl::ocl::context&>(the_context.opencl_context());
+
+		viennacl::ocl::context& ctx = const_cast<viennacl::ocl::context&>(viennacl::traits::context(in).opencl_context());
 		int size = src.size();
-		viennacl::ocl::enqueue(init_offsets_kernel(size, src));
+
 
 		cl_uint numStages = 0;
 		cl_uint temp;

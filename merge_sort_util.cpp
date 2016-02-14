@@ -19,11 +19,15 @@
 #include "org_moa_opencl_util_FloatMergeSort.h"
 #include "org_moa_opencl_util_IntMergeSort.h"
 
+#include "org_moa_opencl_util_DoubleBitonicSort.h"
+
 
 
 #define DOUBLE_MERGE_SORT "org/moa/opencl/util/DoubleMergeSort"
 #define FLOAT_MERGE_SORT "org/moa/opencl/util/FloatMergeSort"
 #define INT_MERGE_SORT "org/moa/opencl/util/IntMergeSort"
+
+#define DOUBLE_BITONIC_SORT "org/moa/opencl/util/DoubleBitonicSort"
 
 
 /*
@@ -223,4 +227,54 @@ JNIEXPORT void JNICALL Java_org_moa_opencl_util_FloatMergeSort_nativeSort
 	default:
 		throw std::runtime_error("Unsupported memory type");
 	}
+}
+
+
+
+/*
+* Class:     org_moa_opencl_util_DoubleBitonicSort
+* Method:    init
+* Signature: (Lorg/viennacl/binding/Context;)V
+*/
+JNIEXPORT void JNICALL Java_org_moa_opencl_util_DoubleBitonicSort_init
+(JNIEnv * env, jobject obj, jobject context)
+{
+	bitonic_sorter<double>* sorter;
+	viennacl::context* ctx = jni_setup::GetNativeImpl<viennacl::context>(env, context, "org/viennacl/binding/Context");
+	sorter = new bitonic_sorter<double>(*ctx);
+	jni_setup::Init<bitonic_sorter<double> >(sorter, env, obj, DOUBLE_BITONIC_SORT);
+}
+
+
+/*
+* Class:     org_moa_opencl_util_DoubleBitonicSort
+* Method:    release
+* Signature: ()V
+*/
+JNIEXPORT void JNICALL Java_org_moa_opencl_util_DoubleBitonicSort_release
+(JNIEnv * env, jobject obj)
+{
+	jni_setup::Release<bitonic_sorter<double> >(env, obj, DOUBLE_MERGE_SORT);
+}
+
+
+/*
+* Class:     org_moa_opencl_util_DoubleBitonicSort
+* Method:    nativeSort
+* Signature: (Lorg/viennacl/binding/Buffer;Lorg/viennacl/binding/Buffer;Lorg/viennacl/binding/Buffer;Lorg/viennacl/binding/Buffer;I)V
+*/
+JNIEXPORT void JNICALL Java_org_moa_opencl_util_DoubleBitonicSort_nativeSort
+(JNIEnv * env, jobject obj, jobject input, jobject tmp, jobject src, jobject dst, jint max_size)
+{
+	bitonic_sorter<double>* sorter = jni_setup::GetNativeImpl< bitonic_sorter<double> >(env, obj, DOUBLE_BITONIC_SORT);
+	native_buffer* input_buffer = jni_setup::GetNativeImpl<native_buffer>(env, input, "org/viennacl/binding/Buffer");
+	native_buffer* tmp_buffer = jni_setup::GetNativeImpl<native_buffer>(env, tmp, "org/viennacl/binding/Buffer");
+	native_buffer* src_buffer = jni_setup::GetNativeImpl<native_buffer>(env, src, "org/viennacl/binding/Buffer");
+	native_buffer* dst_buffer = jni_setup::GetNativeImpl<native_buffer>(env, dst, "org/viennacl/binding/Buffer");
+	jlong size = GetByteSize(env, input) / sizeof(double);
+
+	viennacl::vector<double> input_proxy(input_buffer->m_data, size);
+	viennacl::vector<unsigned int> src_proxy(src_buffer->m_data, size);
+	sorter->bitonic_sort(input_proxy, src_proxy, max_size);
+
 }

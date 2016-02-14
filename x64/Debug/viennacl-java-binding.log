@@ -1,96 +1,33 @@
-﻿Build started 25/01/2016 10:29:17 p.m..
+﻿Build started 15/02/2016 2:20:49 a.m..
      1>Project "C:\master_in_progress\viennacl-java-binding\viennacl-java-binding\viennacl-java-binding.vcxproj" on node 2 (Build target(s)).
      1>ClCompile:
-         H:\VS1025\VC\bin\x86_amd64\CL.exe /c /IC:\master_in_progress\boost\boost_1_58_0 /I"C:\master_in_progress\java\viennacl-binding" /I"C:\Program Files\Java\jdk1.8.0_45\include\win32" /I"C:\Program Files\Java\jdk1.8.0_45\include" /I"C:\Program Files (x86)\AMD APP SDK\3.0-0-Beta\include" /I"C:\master_in_progress\viennacl-dev" /I"C:\master_in_progress\clogs-code\include" /ZI /nologo /W3 /WX- /Od /D _DEBUG /D _WINDOWS /D _USRDLL /D VIENNACLJAVABINDING_EXPORTS /D VIENNACL_WITH_OPENCL /D VIENNACL_WITH_OPENCL20 /D CL_USE_DEPRECATED_OPENCL_2_0_APIS /D CLOGS_DLL_DO_STATIC /D _WINDLL /D _UNICODE /D UNICODE /Gm /EHsc /RTC1 /MDd /GS /fp:precise /Zc:wchar_t /Zc:forScope /Zc:inline /Fo"x64\Debug\\" /Fd"x64\Debug\vc140.pdb" /Gd /TP /errorReport:prompt buffer.cpp clogs_sort.cpp fjlt_impl.cpp kernel.cpp merge_sort_util.cpp morton.cpp stdafx.cpp utils.cpp "viennacl-java-binding.cpp"
-         viennacl-java-binding.cpp
-     1>c:\master_in_progress\viennacl-dev\viennacl\ocl\context.hpp(71): warning C4996: 'getenv': This function or variable may be unsafe. Consider using _dupenv_s instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. See online help for details.
-         c:\program files (x86)\windows kits\10\include\10.0.10150.0\ucrt\stdlib.h(1183): note: see declaration of 'getenv'
-     1>c:\master_in_progress\viennacl-dev\viennacl\ocl\context.hpp(72): warning C4996: 'getenv': This function or variable may be unsafe. Consider using _dupenv_s instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. See online help for details.
-         c:\program files (x86)\windows kits\10\include\10.0.10150.0\ucrt\stdlib.h(1183): note: see declaration of 'getenv'
-     1>c:\master_in_progress\viennacl-java-binding\viennacl-java-binding\viennacl-java-binding.cpp(52): warning C4996: 'getenv': This function or variable may be unsafe. Consider using _dupenv_s instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. See online help for details.
-         c:\program files (x86)\windows kits\10\include\10.0.10150.0\ucrt\stdlib.h(1183): note: see declaration of 'getenv'
-     1>c:\master_in_progress\viennacl-java-binding\viennacl-java-binding\viennacl-java-binding.cpp(256): warning C4267: 'initializing': conversion from 'size_t' to 'int', possible loss of data
-     1>c:\master_in_progress\viennacl-java-binding\viennacl-java-binding\jni_setup.h(33): warning C4150: deletion of pointer to incomplete type '_cl_command_queue'; no destructor called
-         c:\program files (x86)\amd app sdk\3.0-0-beta\include\cl\cl.h(42): note: see declaration of '_cl_command_queue'
-         c:\master_in_progress\viennacl-java-binding\viennacl-java-binding\viennacl-java-binding.cpp(258): note: see reference to function template instantiation 'void jni_setup::Init<_cl_command_queue>(T *,JNIEnv *,jobject,const char *const )' being compiled
-                 with
-                 [
-                     T=_cl_command_queue
-                 ]
-         utils.cpp
-     1>c:\master_in_progress\viennacl-dev\viennacl\ocl\context.hpp(71): warning C4996: 'getenv': This function or variable may be unsafe. Consider using _dupenv_s instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. See online help for details.
-         c:\program files (x86)\windows kits\10\include\10.0.10150.0\ucrt\stdlib.h(1183): note: see declaration of 'getenv'
-     1>c:\master_in_progress\viennacl-dev\viennacl\ocl\context.hpp(72): warning C4996: 'getenv': This function or variable may be unsafe. Consider using _dupenv_s instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. See online help for details.
-         c:\program files (x86)\windows kits\10\include\10.0.10150.0\ucrt\stdlib.h(1183): note: see declaration of 'getenv'
-         stdafx.cpp
-         morton.cpp
-     1>c:\master_in_progress\viennacl-dev\viennacl\ocl\context.hpp(71): warning C4996: 'getenv': This function or variable may be unsafe. Consider using _dupenv_s instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. See online help for details.
-         c:\program files (x86)\windows kits\10\include\10.0.10150.0\ucrt\stdlib.h(1183): note: see declaration of 'getenv'
-     1>c:\master_in_progress\viennacl-dev\viennacl\ocl\context.hpp(72): warning C4996: 'getenv': This function or variable may be unsafe. Consider using _dupenv_s instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. See online help for details.
-         c:\program files (x86)\windows kits\10\include\10.0.10150.0\ucrt\stdlib.h(1183): note: see declaration of 'getenv'
-     1>c:\master_in_progress\viennacl-java-binding\viennacl-java-binding\morton.cpp(50): warning C4267: '+=': conversion from 'size_t' to 'int', possible loss of data
-         merge_sort_util.cpp
-     1>c:\master_in_progress\viennacl-dev\viennacl\ocl\context.hpp(71): warning C4996: 'getenv': This function or variable may be unsafe. Consider using _dupenv_s instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. See online help for details.
-         c:\program files (x86)\windows kits\10\include\10.0.10150.0\ucrt\stdlib.h(1183): note: see declaration of 'getenv'
-     1>c:\master_in_progress\viennacl-dev\viennacl\ocl\context.hpp(72): warning C4996: 'getenv': This function or variable may be unsafe. Consider using _dupenv_s instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. See online help for details.
-         c:\program files (x86)\windows kits\10\include\10.0.10150.0\ucrt\stdlib.h(1183): note: see declaration of 'getenv'
-     1>c:\master_in_progress\viennacl-java-binding\viennacl-java-binding\merge_sort.h(436): warning C4003: not enough actual parameters for macro 'max'
-     1>c:\master_in_progress\viennacl-java-binding\viennacl-java-binding\merge_sort_util.cpp(89): warning C4297: 'Java_org_moa_opencl_util_DoubleMergeSort_nativeSort': function assumed not to throw an exception but does
-         c:\master_in_progress\viennacl-java-binding\viennacl-java-binding\merge_sort_util.cpp(89): note: __declspec(nothrow), throw(), noexcept(true), or noexcept was specified on the function
-     1>c:\master_in_progress\viennacl-java-binding\viennacl-java-binding\merge_sort_util.cpp(156): warning C4297: 'Java_org_moa_opencl_util_IntMergeSort_nativeSort': function assumed not to throw an exception but does
-         c:\master_in_progress\viennacl-java-binding\viennacl-java-binding\merge_sort_util.cpp(156): note: __declspec(nothrow), throw(), noexcept(true), or noexcept was specified on the function
-     1>c:\master_in_progress\viennacl-java-binding\viennacl-java-binding\merge_sort_util.cpp(224): warning C4297: 'Java_org_moa_opencl_util_FloatMergeSort_nativeSort': function assumed not to throw an exception but does
-         c:\master_in_progress\viennacl-java-binding\viennacl-java-binding\merge_sort_util.cpp(224): note: __declspec(nothrow), throw(), noexcept(true), or noexcept was specified on the function
-     1>c:\master_in_progress\viennacl-java-binding\viennacl-java-binding\merge_sort.h(559): warning C4267: '=': conversion from 'size_t' to 'int', possible loss of data
-         c:\master_in_progress\viennacl-java-binding\viennacl-java-binding\merge_sort.h(556): note: while compiling class template member function 'void merge_sorter<float>::merge_sort(viennacl::vector<float,1> &,viennacl::vector<float,1> &,viennacl::vector<unsigned int,1> &,viennacl::vector<unsigned int,1> &,int)'
-         c:\master_in_progress\viennacl-java-binding\viennacl-java-binding\merge_sort_util.cpp(211): note: see reference to function template instantiation 'void merge_sorter<float>::merge_sort(viennacl::vector<float,1> &,viennacl::vector<float,1> &,viennacl::vector<unsigned int,1> &,viennacl::vector<unsigned int,1> &,int)' being compiled
-         c:\master_in_progress\viennacl-java-binding\viennacl-java-binding\merge_sort_util.cpp(174): note: see reference to class template instantiation 'merge_sorter<float>' being compiled
-         kernel.cpp
-     1>c:\master_in_progress\viennacl-dev\viennacl\ocl\context.hpp(71): warning C4996: 'getenv': This function or variable may be unsafe. Consider using _dupenv_s instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. See online help for details.
-         c:\program files (x86)\windows kits\10\include\10.0.10150.0\ucrt\stdlib.h(1183): note: see declaration of 'getenv'
-     1>c:\master_in_progress\viennacl-dev\viennacl\ocl\context.hpp(72): warning C4996: 'getenv': This function or variable may be unsafe. Consider using _dupenv_s instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. See online help for details.
-         c:\program files (x86)\windows kits\10\include\10.0.10150.0\ucrt\stdlib.h(1183): note: see declaration of 'getenv'
-     1>c:\master_in_progress\viennacl-java-binding\viennacl-java-binding\kernel.cpp(116): warning C4297: 'Java_org_viennacl_binding_Kernel_invoke___3Ljava_lang_Object_2': function assumed not to throw an exception but does
-         c:\master_in_progress\viennacl-java-binding\viennacl-java-binding\kernel.cpp(116): note: __declspec(nothrow), throw(), noexcept(true), or noexcept was specified on the function
-         fjlt_impl.cpp
-     1>c:\master_in_progress\viennacl-dev\viennacl\ocl\context.hpp(71): warning C4996: 'getenv': This function or variable may be unsafe. Consider using _dupenv_s instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. See online help for details.
-         c:\program files (x86)\windows kits\10\include\10.0.10150.0\ucrt\stdlib.h(1183): note: see declaration of 'getenv'
-     1>c:\master_in_progress\viennacl-dev\viennacl\ocl\context.hpp(72): warning C4996: 'getenv': This function or variable may be unsafe. Consider using _dupenv_s instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. See online help for details.
-         c:\program files (x86)\windows kits\10\include\10.0.10150.0\ucrt\stdlib.h(1183): note: see declaration of 'getenv'
-     1>c:\master_in_progress\viennacl-java-binding\viennacl-java-binding\fjlt_impl.cpp(57): warning C4297: 'Java_org_moa_gpu_FJLT_native_1transform': function assumed not to throw an exception but does
-         c:\master_in_progress\viennacl-java-binding\viennacl-java-binding\fjlt_impl.cpp(57): note: __declspec(nothrow), throw(), noexcept(true), or noexcept was specified on the function
-         clogs_sort.cpp
-     1>c:\master_in_progress\viennacl-dev\viennacl\ocl\context.hpp(71): warning C4996: 'getenv': This function or variable may be unsafe. Consider using _dupenv_s instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. See online help for details.
-         c:\program files (x86)\windows kits\10\include\10.0.10150.0\ucrt\stdlib.h(1183): note: see declaration of 'getenv'
-     1>c:\master_in_progress\viennacl-dev\viennacl\ocl\context.hpp(72): warning C4996: 'getenv': This function or variable may be unsafe. Consider using _dupenv_s instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. See online help for details.
-         c:\program files (x86)\windows kits\10\include\10.0.10150.0\ucrt\stdlib.h(1183): note: see declaration of 'getenv'
+         H:\VS1025\VC\bin\x86_amd64\CL.exe /c /IC:\master_in_progress\boost\boost_1_58_0 /I"C:\master_in_progress\java\viennacl-binding" /I"C:\Program Files\Java\jdk1.8.0_45\include\win32" /I"C:\Program Files\Java\jdk1.8.0_45\include" /I"C:\Program Files (x86)\AMD APP SDK\3.0-0-Beta\include" /I"C:\master_in_progress\viennacl-dev" /I"C:\master_in_progress\clogs-code\include" /ZI /nologo /W3 /WX- /Od /D _DEBUG /D _WINDOWS /D _USRDLL /D VIENNACLJAVABINDING_EXPORTS /D VIENNACL_WITH_OPENCL /D VIENNACL_WITH_OPENCL20 /D CL_USE_DEPRECATED_OPENCL_2_0_APIS /D CLOGS_DLL_DO_STATIC /D _WINDLL /D _UNICODE /D UNICODE /Gm /EHsc /RTC1 /MDd /GS /fp:precise /Zc:wchar_t /Zc:forScope /Zc:inline /Fo"x64\Debug\\" /Fd"x64\Debug\vc140.pdb" /Gd /TP /errorReport:prompt buffer.cpp
          buffer.cpp
      1>c:\master_in_progress\viennacl-dev\viennacl\ocl\context.hpp(71): warning C4996: 'getenv': This function or variable may be unsafe. Consider using _dupenv_s instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. See online help for details.
          c:\program files (x86)\windows kits\10\include\10.0.10150.0\ucrt\stdlib.h(1183): note: see declaration of 'getenv'
      1>c:\master_in_progress\viennacl-dev\viennacl\ocl\context.hpp(72): warning C4996: 'getenv': This function or variable may be unsafe. Consider using _dupenv_s instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. See online help for details.
          c:\program files (x86)\windows kits\10\include\10.0.10150.0\ucrt\stdlib.h(1183): note: see declaration of 'getenv'
-         Generating Code...
-         H:\VS1025\VC\bin\x86_amd64\CL.exe /c /IC:\master_in_progress\boost\boost_1_58_0 /I"C:\master_in_progress\java\viennacl-binding" /I"C:\Program Files\Java\jdk1.8.0_45\include\win32" /I"C:\Program Files\Java\jdk1.8.0_45\include" /I"C:\Program Files (x86)\AMD APP SDK\3.0-0-Beta\include" /I"C:\master_in_progress\viennacl-dev" /I"C:\master_in_progress\clogs-code\include" /ZI /nologo /W3 /WX- /Od /D _DEBUG /D _WINDOWS /D _USRDLL /D VIENNACLJAVABINDING_EXPORTS /D VIENNACL_WITH_OPENCL /D VIENNACL_WITH_OPENCL20 /D CL_USE_DEPRECATED_OPENCL_2_0_APIS /D CLOGS_DLL_DO_STATIC /D _WINDLL /D _UNICODE /D UNICODE /Gm /EHsc /RTC1 /MDd /GS /fp:precise /Zc:wchar_t /Zc:forScope /Zc:inline /Fo"x64\Debug\\" /Fd"x64\Debug\vc140.pdb" /Gd /TP /errorReport:prompt dllmain.cpp
-         dllmain.cpp
+     1>c:\master_in_progress\viennacl-java-binding\viennacl-java-binding\jni_viennacl_context.h(36): warning C4297: 'native_buffer::~native_buffer': function assumed not to throw an exception but does
+         c:\master_in_progress\viennacl-java-binding\viennacl-java-binding\jni_viennacl_context.h(36): note: destructor or deallocator has a (possibly implicit) non-throwing exception specification
        Link:
-         H:\VS1025\VC\bin\x86_amd64\link.exe /ERRORREPORT:PROMPT /OUT:"C:\master_in_progress\windows_build\x64\Debug\viennacl-java-binding.dll" /INCREMENTAL /NOLOGO /LIBPATH:C:\master_in_progress\windows_build\x64\Debug /LIBPATH:"C:\Program Files (x86)\AMD APP SDK\3.0-0-Beta\lib\x86_64" /LIBPATH:"C:\Program Files\Java\jdk1.8.0_45\lib" OpenCL.lib clogs.lib kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib /MANIFEST /MANIFESTUAC:"level='asInvoker' uiAccess='false'" /manifest:embed /Debug /PDB:"C:\master_in_progress\windows_build\x64\Debug\viennacl-java-binding.pdb" /SUBSYSTEM:WINDOWS /TLBID:1 /DYNAMICBASE /NXCOMPAT /IMPLIB:"C:\master_in_progress\windows_build\x64\Debug\viennacl-java-binding.lib" /MACHINE:X64 /DLL x64\Debug\buffer.obj
-         x64\Debug\clogs_sort.obj
+         H:\VS1025\VC\bin\x86_amd64\link.exe /ERRORREPORT:PROMPT /OUT:"C:\master_in_progress\viennacl-java-binding\x64\Debug\viennacl-java-binding.dll" /INCREMENTAL /NOLOGO /LIBPATH:C:\master_in_progress\windows_build\x64\Debug /LIBPATH:"C:\Program Files (x86)\AMD APP SDK\3.0-0-Beta\lib\x86_64" /LIBPATH:"C:\Program Files\Java\jdk1.8.0_45\lib" OpenCL.lib clogs.lib kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib /MANIFEST /MANIFESTUAC:"level='asInvoker' uiAccess='false'" /manifest:embed /Debug /PDB:"C:\master_in_progress\viennacl-java-binding\x64\Debug\viennacl-java-binding.pdb" /SUBSYSTEM:WINDOWS /TLBID:1 /DYNAMICBASE /NXCOMPAT /IMPLIB:"C:\master_in_progress\viennacl-java-binding\x64\Debug\viennacl-java-binding.lib" /MACHINE:X64 /DLL x64\Debug\buffer.obj
          x64\Debug\dllmain.obj
          x64\Debug\fjlt_impl.obj
          x64\Debug\kernel.obj
          x64\Debug\merge_sort_util.obj
          x64\Debug\morton.obj
+         x64\Debug\operations.obj
          x64\Debug\stdafx.obj
          x64\Debug\utils.obj
          "x64\Debug\viennacl-java-binding.obj"
-            Creating library C:\master_in_progress\windows_build\x64\Debug\viennacl-java-binding.lib and object C:\master_in_progress\windows_build\x64\Debug\viennacl-java-binding.exp
-         viennacl-java-binding.vcxproj -> C:\master_in_progress\windows_build\x64\Debug\viennacl-java-binding.dll
+            Creating library C:\master_in_progress\viennacl-java-binding\x64\Debug\viennacl-java-binding.lib and object C:\master_in_progress\viennacl-java-binding\x64\Debug\viennacl-java-binding.exp
+         viennacl-java-binding.vcxproj -> C:\master_in_progress\viennacl-java-binding\x64\Debug\viennacl-java-binding.dll
        PostBuildEvent:
-         copy C:\master_in_progress\windows_build\x64\Debug\viennacl-java-binding.dll C:\master_in_progress\java\viennacl-binding\ 
+         copy C:\master_in_progress\viennacl-java-binding\x64\Debug\viennacl-java-binding.dll C:\master_in_progress\java\viennacl-binding\ 
          :VCEnd
                  1 file(s) copied.
      1>Done Building Project "C:\master_in_progress\viennacl-java-binding\viennacl-java-binding\viennacl-java-binding.vcxproj" (Build target(s)).
 
 Build succeeded.
 
-Time Elapsed 00:00:34.51
+Time Elapsed 00:00:03.86

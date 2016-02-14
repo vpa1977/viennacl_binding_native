@@ -22,6 +22,7 @@
 
 void do_transform(viennacl::vector<NUM_DATA_TYPE>& src, viennacl::vector<NUM_DATA_TYPE>& pre_fft_temp,  viennacl::vector<NUM_DATA_TYPE>& temp, viennacl::vector<NUM_DATA_TYPE>& ind)
 {
+
 	pre_fft_temp = viennacl::linalg::element_prod(src, ind);
 	viennacl::fft(pre_fft_temp, temp);
 	temp = sqrt(2) * temp;
@@ -47,10 +48,15 @@ JNIEXPORT void JNICALL Java_org_moa_gpu_FJLT_native_1transform
 	}
 	else if (source_buffer->m_cpu_data != 0)
 	{
-		viennacl::vector<NUM_DATA_TYPE> src((NUM_DATA_TYPE*)source_buffer->m_cpu_data, viennacl::MAIN_MEMORY, n);
-		viennacl::vector<NUM_DATA_TYPE> temp((NUM_DATA_TYPE*)temp_buffer->m_cpu_data, viennacl::MAIN_MEMORY, n);
-		viennacl::vector<NUM_DATA_TYPE> pre_fft_temp((NUM_DATA_TYPE*)pre_fft_temp_buffer->m_cpu_data, viennacl::MAIN_MEMORY, n);
-		viennacl::vector<NUM_DATA_TYPE> ind((NUM_DATA_TYPE*)indicators_buffer->m_cpu_data, viennacl::MAIN_MEMORY, n);
+		viennacl::memory_types type = viennacl::MAIN_MEMORY;
+#ifdef VIENNACL_WITH_HSA
+		type = viennacl::HSA_MEMORY;
+#endif
+		
+		viennacl::vector<NUM_DATA_TYPE> src((NUM_DATA_TYPE*)source_buffer->m_cpu_data, type, n);
+		viennacl::vector<NUM_DATA_TYPE> temp((NUM_DATA_TYPE*)temp_buffer->m_cpu_data, type, n);
+		viennacl::vector<NUM_DATA_TYPE> pre_fft_temp((NUM_DATA_TYPE*)pre_fft_temp_buffer->m_cpu_data, type, n);
+		viennacl::vector<NUM_DATA_TYPE> ind((NUM_DATA_TYPE*)indicators_buffer->m_cpu_data, type, n);
 		do_transform(src, pre_fft_temp, temp, ind);
 	}
 	else

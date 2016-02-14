@@ -68,10 +68,22 @@ inline void SetCPUMemoryField(JNIEnv * env, jobject obj, void * the_pointer)
 * Method:    native_copy
 * Signature: (Lorg/viennacl/binding/Buffer;)V
 */
-JNIEXPORT void JNICALL Java_org_viennacl_binding_Buffer_native_1copy
+JNIEXPORT void JNICALL Java_org_viennacl_binding_Buffer_native_1copy__Lorg_viennacl_binding_Buffer_2
 (JNIEnv * env, jobject obj, jobject target)
 {
 	jlong size = GetByteSize(env, obj);
+	Java_org_viennacl_binding_Buffer_native_1copy__Lorg_viennacl_binding_Buffer_2JJ(env, obj, target, 0, size);
+}
+
+
+/*
+* Class:     org_viennacl_binding_Buffer
+* Method:    native_copy
+* Signature: (Lorg/viennacl/binding/Buffer;JJ)V
+*/
+JNIEXPORT void JNICALL Java_org_viennacl_binding_Buffer_native_1copy__Lorg_viennacl_binding_Buffer_2JJ
+(JNIEnv * env, jobject obj, jobject target, jlong offset, jlong length)
+{
 	native_buffer * src = jni_setup::GetNativeImpl<native_buffer>(env, obj, "org/viennacl/binding/Buffer");
 	native_buffer * dst = jni_setup::GetNativeImpl<native_buffer>(env, target, "org/viennacl/binding/Buffer");
 	int mem_type = GetMemType(env, obj);
@@ -96,9 +108,9 @@ JNIEXPORT void JNICALL Java_org_viennacl_binding_Buffer_native_1copy
 			queue = ctx->opencl_context().get_queue().handle().get();
 		}
 
-		cl_int err = clEnqueueCopyBuffer(queue, src->m_data, dst->m_data, 0, 0, size, 0, 0, 0);
+		cl_int err = clEnqueueCopyBuffer(queue, src->m_data, dst->m_data, offset, 0, length, 0, 0, 0);
 
-		if ( err != CL_SUCCESS)
+		if (err != CL_SUCCESS)
 			throw std::runtime_error("Unable to copy buffer");
 
 	}
@@ -109,11 +121,11 @@ JNIEXPORT void JNICALL Java_org_viennacl_binding_Buffer_native_1copy
 		if (src->m_data || dst->m_data)
 			throw std::runtime_error("Memory Corruption!");
 
-		memcpy(dst->m_cpu_data, src->m_cpu_data, size);
+		memcpy(dst->m_cpu_data, (char*)(src->m_cpu_data)+offset, length);
 	}
 }
 
-JNIEXPORT void JNICALL Java_org_viennacl_binding_Buffer_fill
+JNIEXPORT void JNICALL Java_org_viennacl_binding_Buffer_fill__B
 (JNIEnv * env, jobject obj, jbyte b)
 {
 	jlong size = GetByteSize(env, obj);
@@ -363,7 +375,7 @@ JNIEXPORT void JNICALL Java_org_viennacl_binding_Buffer_allocate
 
 		viennacl::context* ctx = GetContext(env, obj, context_field);
 		cl_context raw_context = ctx->opencl_context().handle().get();
-		ptr->m_data_host_ptr = new uint8_t[size];
+		ptr->m_data_host_ptr = malloc(size);
 		memset(ptr->m_data_host_ptr, 0, size);
 		ptr->m_data = clCreateBuffer(raw_context, (GetMemMode(GetBufferMode(env,obj))) | CL_MEM_USE_HOST_PTR, size, ptr->m_data_host_ptr, &err);
 		if (ptr->m_data == 0)
@@ -378,7 +390,11 @@ JNIEXPORT void JNICALL Java_org_viennacl_binding_Buffer_allocate
 	case JAVA_BIND_MAIN_MEMORY:
 	case JAVA_BIND_HSA_MEMORY:
 	{
-		ptr->m_cpu_data = new uint8_t[size];
+#ifdef VIENNACL_WITH_HSA
+		ptr->m_cpu_data = malloc_global(size);
+#else
+		ptr->m_cpu_data = malloc(size);
+#endif
 #ifdef VIENNACL_DEBUG_KERNEL
 		memset(ptr->m_cpu_data, 0, size);
 #endif
@@ -392,13 +408,55 @@ JNIEXPORT void JNICALL Java_org_viennacl_binding_Buffer_allocate
 	
 }
 
+
 /*
 * Class:     org_viennacl_binding_Buffer
 * Method:    release
 * Signature: ()V
 */
-JNIEXPORT void JNICALL Java_org_viennacl_binding_Buffer_release
+JNIEXPORT void JNICALL Java_org_viennacl_binding_Buffer_release__
 (JNIEnv * env, jobject obj)
 {
+	// use normal map/unmap to make sure that all pending kernel operations are done
+	Java_org_viennacl_binding_Buffer_map__IJJ(env, obj, 2, 0, 1);
+	Java_org_viennacl_binding_Buffer_commit(env, obj);
+
+#ifdef VIENNACL_WITH_HSA
+	int mem_type = GetMemType(env, obj);
+	if (mem_type == JAVA_BIND_HSA_MEMORY)
+	{
+		native_buffer * ptr = jni_setup::GetNativeImpl<native_buffer>(env, obj, "org/viennacl/binding/Buffer");
+		free_global(ptr->m_cpu_data);
+		ptr->m_cpu_data = NULL;
+	}
+#endif
+
 	jni_setup::Release<native_buffer>(env, obj, "org/viennacl/binding/Buffer");
 }
+
+/*
+* Class:     org_viennacl_binding_Buffer
+* Method:    release
+* Signature: (J)V
+*/
+JNIEXPORT void JNICALL Java_org_viennacl_binding_Buffer_release__J
+(JNIEnv *env, jobject obj, jlong ctx)
+{
+	viennacl::context* context = (viennacl::context*)ctx;
+	int mem_type = GetMemType(env, obj);
+#ifdef VIENNACL_WITH_OPENCL
+	if (mem_type == JAVA_BIND_OPENCL_MEMORY)
+	{
+		context->opencl_context().get_queue().finish();
+	}
+#endif
+	
+#ifdef VIENNACL_WITH_HSA
+	if (mem_type == JAVA_BIND_HSA_MEMORY)
+	{
+		const_cast<viennacl::hsa::context&>(context->hsa_context()).get_queue().finish();
+	}
+#endif
+	jni_setup::Release<native_buffer>(env, obj, "org/viennacl/binding/Buffer");
+}
+

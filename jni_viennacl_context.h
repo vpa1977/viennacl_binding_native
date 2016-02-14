@@ -23,13 +23,17 @@ struct native_buffer
 #ifdef VIENNACL_WITH_OPENCL
 		if (m_data)
 		{
+			free(m_data_host_ptr);
 			clReleaseMemObject(m_data);
-			delete m_data_host_ptr;
 			m_cpu_data = 0;
+			m_data_host_ptr = 0;
+			m_data = 0;
 		}
 #endif
 		if (m_cpu_data)
 		{
+			if (m_data)
+				throw std::runtime_error("Memory Corruption");
 			delete m_cpu_data;
 			m_cpu_data = 0;
 		}

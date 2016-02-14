@@ -15,4 +15,9 @@
 
 #define NUM_DATA_TYPE double
 
+#ifdef VIENNACL_WITH_HSA
+void free_global(void* free_pointer);
+void*  malloc_global(size_t sz);
+#endif
+
 #endif

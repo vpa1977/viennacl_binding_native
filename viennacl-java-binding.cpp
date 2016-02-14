@@ -13,6 +13,62 @@
 #pragma warning (disable:4297)
 #endif
 
+
+#ifdef VIENNACL_WITH_HSA
+#include <hsa.h>
+
+static hsa_region_t HSA_GlobalRegion;
+
+/* Determines if the given agent is of type HSA_DEVICE_TYPE_GPU
+   and sets the value of data to the agent handle if it is.
+*/
+static hsa_status_t get_gpu_agent(hsa_agent_t agent, void *data) {
+    hsa_status_t status;
+    hsa_device_type_t device_type;
+    status = hsa_agent_get_info(agent, HSA_AGENT_INFO_DEVICE, &device_type);
+    if (HSA_STATUS_SUCCESS == status && HSA_DEVICE_TYPE_GPU == device_type) {
+        hsa_agent_t* ret = (hsa_agent_t*)data;
+        *ret = agent;
+        return HSA_STATUS_INFO_BREAK;
+    }
+    return HSA_STATUS_SUCCESS;
+}
+
+/* Find the global fine grained region */
+extern hsa_status_t find_global_region(hsa_region_t region, void* data)
+{
+         if(NULL == data) return HSA_STATUS_ERROR_INVALID_ARGUMENT;
+
+         hsa_status_t err;
+         hsa_region_segment_t segment;
+         uint32_t flag;
+
+         err = hsa_region_get_info(region, HSA_REGION_INFO_SEGMENT, &segment);
+
+         err = hsa_region_get_info(region, HSA_REGION_INFO_GLOBAL_FLAGS, &flag);
+
+         if((HSA_REGION_SEGMENT_GLOBAL == segment) && (flag & HSA_REGION_GLOBAL_FLAG_FINE_GRAINED)) {
+                 *((hsa_region_t*)data) = region;
+         }
+
+         return HSA_STATUS_SUCCESS;
+}
+
+extern void free_global(void* free_pointer) {
+    hsa_status_t err;
+    err = hsa_memory_free(free_pointer);
+    return ;
+}
+
+extern void*  malloc_global(size_t sz) {
+    void* temp_pointer;
+    hsa_status_t err;
+    err = hsa_memory_allocate(HSA_GlobalRegion, sz, (void**)&temp_pointer);
+    return temp_pointer;
+}
+#endif
+
+
 static void GetJStringContent(JNIEnv *AEnv, jstring AStr, std::string &ARes) {
 	if (!AStr) {
 		ARes.clear();
@@ -71,7 +127,18 @@ JNIEXPORT void JNICALL Java_org_viennacl_binding_Context_init
 #endif
 #ifdef VIENNACL_WITH_HSA
 	case 2:
+	{
 		ptr = new viennacl::context(viennacl::HSA_MEMORY);
+		// setup memory allocation
+		 /* Iterate over the agents and pick the gpu agent */
+		hsa_status_t err;
+		hsa_agent_t thisAgent;
+		err = hsa_iterate_agents(get_gpu_agent, &thisAgent);
+	    /* Find the global region to support malloc_global */
+	    hsa_agent_iterate_regions(thisAgent, find_global_region, &HSA_GlobalRegion);
+	    err = (HSA_GlobalRegion.handle == (uint64_t)-1) ? HSA_STATUS_ERROR : HSA_STATUS_SUCCESS;
+
+	}
 		break;
 #endif
 	default:
@@ -98,10 +165,11 @@ JNIEXPORT void JNICALL Java_org_viennacl_binding_Context_release
 * Signature: (Ljava/lang/String;Ljava/lang/String;)V
 */
 JNIEXPORT void JNICALL Java_org_viennacl_binding_Context_addProgram
-(JNIEnv * env, jobject obj, jstring jprogram, jstring jtext)
+(JNIEnv * env, jobject obj, jstring jprogram, jstring jtext,  jstring jbuild_options) 
 {
 	std::string program;
 	std::string text;
+	std::string build_options;
 
 	viennacl::context* ctx = jni_setup::GetNativeImpl<viennacl::context>(env, obj, "org/viennacl/binding/Context");
 	if (ctx->memory_type() == viennacl::OPENCL_MEMORY)
@@ -109,7 +177,10 @@ JNIEXPORT void JNICALL Java_org_viennacl_binding_Context_addProgram
 #ifdef VIENNACL_WITH_OPENCL
 		GetJStringContent(env, jprogram, program);
 		GetJStringContent(env, jtext, text);
+		GetJStringContent(env, jbuild_options, build_options);
+		ctx->opencl_context().build_options(build_options);
 		ctx->opencl_context().add_program(text, program);
+		ctx->opencl_context().build_options("");
 #endif
 	}
 	else
@@ -118,7 +189,10 @@ JNIEXPORT void JNICALL Java_org_viennacl_binding_Context_addProgram
 #ifdef VIENNACL_WITH_HSA
 			GetJStringContent(env, jprogram, program);
 			GetJStringContent(env, jtext, text);
+			GetJStringContent(env, jbuild_options, build_options);
+			const_cast<viennacl::hsa::context&>(ctx->hsa_context()).build_options(build_options);
 			const_cast<viennacl::hsa::context&>(ctx->hsa_context()).add_program(text, program);
+			const_cast<viennacl::hsa::context&>(ctx->hsa_context()).build_options("");
 #endif
 		}
 		else
@@ -158,7 +232,7 @@ JNIEXPORT void JNICALL Java_org_viennacl_binding_Context_finishDefaultQueue
 * Signature: ()V
 */
 JNIEXPORT void JNICALL Java_org_viennacl_binding_Context_submitBarrier
-(JNIEnv * env, jobject obj)
+(JNIEnv * env, jobject obj, jboolean val)
 {
 	viennacl::context* ctx = jni_setup::GetNativeImpl<viennacl::context>(env, obj, "org/viennacl/binding/Context");
 	if (ctx->memory_type() == viennacl::OPENCL_MEMORY)
@@ -171,7 +245,7 @@ JNIEXPORT void JNICALL Java_org_viennacl_binding_Context_submitBarrier
 		if (ctx->memory_type() == viennacl::HSA_MEMORY)
 		{
 #ifdef VIENNACL_WITH_HSA
-			const_cast<viennacl::hsa::context&>(ctx->hsa_context()).get_queue().submit_barrier();
+			const_cast<viennacl::hsa::context&>(ctx->hsa_context()).get_queue().submit_barrier(val);
 #endif
 		}
 		else
@@ -285,5 +359,6 @@ JNIEXPORT jobject JNICALL Java_org_viennacl_binding_Context_createQueue
 	jni_setup::Init<_cl_command_queue>(command_queue, env, queue, "org/viennacl/binding/Kernel");
 	return queue;
 }
+
 
 
