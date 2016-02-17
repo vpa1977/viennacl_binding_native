@@ -21,14 +21,10 @@
 #include "org_viennacl_binding_Buffer.h"
 #include "jni_viennacl_context.h"
 #include "org_moa_opencl_util_Operations.h"
-void do_transform(viennacl::matrix<NUM_DATA_TYPE>& source, viennacl::vector<NUM_DATA_TYPE>& test,
-	viennacl::vector<NUM_DATA_TYPE>& result, int rows, int columns)
-{
 
-}
 
-JNIEXPORT void JNICALL Java_org_moa_opencl_util_Operations_cosineSimilarity
-(JNIEnv * env, jobject obj, jobject matrix, jint columns, jint rows, jobject vec, jobject result)
+JNIEXPORT void JNICALL Java_org_moa_opencl_util_Operations_dense_1ax
+(JNIEnv * env, jobject obj, jobject matrix, jobject vec,  jobject result,jint rows, jint columns)
 {
 	native_buffer* matrix_buffer = jni_setup::GetNativeImpl<native_buffer>(env, matrix, "org/viennacl/binding/Buffer");
 	native_buffer* vec_buffer = jni_setup::GetNativeImpl<native_buffer>(env, vec, "org/viennacl/binding/Buffer");
@@ -38,7 +34,8 @@ JNIEXPORT void JNICALL Java_org_moa_opencl_util_Operations_cosineSimilarity
 		viennacl::matrix<NUM_DATA_TYPE> source(matrix_buffer->m_data, rows, columns);
 		viennacl::vector<NUM_DATA_TYPE> vec_data(vec_buffer->m_data, columns);
 		viennacl::vector<NUM_DATA_TYPE> result(result_buffer->m_data, rows);
-		do_transform(source, vec_data, result, rows, columns);
+		result = viennacl::linalg::prod(source, vec_data);
+		
 	}
 	else if (matrix_buffer->m_cpu_data != 0)
 	{
@@ -47,9 +44,9 @@ JNIEXPORT void JNICALL Java_org_moa_opencl_util_Operations_cosineSimilarity
 		type = viennacl::HSA_MEMORY;
 #endif
 		viennacl::matrix<NUM_DATA_TYPE> source((NUM_DATA_TYPE*)matrix_buffer->m_cpu_data, type, rows, columns);
-		viennacl::vector<NUM_DATA_TYPE> vec_data((NUM_DATA_TYPE*)vec_buffer->m_cpu_data, type, rows);
-		viennacl::vector<NUM_DATA_TYPE> result((NUM_DATA_TYPE*)result_buffer->m_cpu_data, type, columns);
-		do_transform(source, vec_data, result, rows, columns);
+		viennacl::vector<NUM_DATA_TYPE> vec_data((NUM_DATA_TYPE*)vec_buffer->m_cpu_data, type, columns);
+		viennacl::vector<NUM_DATA_TYPE> result((NUM_DATA_TYPE*)result_buffer->m_cpu_data, type, rows);
+		result = viennacl::linalg::prod(source, vec_data);
 
 	}
 	else
