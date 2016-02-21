@@ -108,7 +108,7 @@ JNIEXPORT void JNICALL Java_org_moa_gpu_FJLT_native_1batch_1update
 			viennacl::copy(src.begin() + i*n, src.begin() + (i + 1)*n, p2.begin());
 			p2 = viennacl::linalg::element_prod(p2, ind);
 			viennacl::fft(p2, temp);
-			permute(k, temp.handle(), substitutions.handle(), srhst_constant, p2.handle()).enqueue();
+			permute(k, temp.handle(), substitutions.handle(), (NUM_DATA_TYPE)srhst_constant, p2.handle()).enqueue();
 			viennacl::copy(p2.begin(), p2.begin() + k, destination.begin() + i*k);
 		}
 		
@@ -119,13 +119,13 @@ JNIEXPORT void JNICALL Java_org_moa_gpu_FJLT_native_1batch_1update
 #ifdef VIENNACL_WITH_HSA
 		type = viennacl::HSA_MEMORY;
 		long len = nextPow2(n);
-		viennacl::vector<NUM_DATA_TYPE> src(source_buffer->m_cpu_data, type,n*rows);
-		viennacl::vector<NUM_DATA_TYPE> p2(p2_buffer->m_cpu_data, type, len);
-		viennacl::vector<NUM_DATA_TYPE> temp(temp_buffer->m_cpu_data, type, len);
-		viennacl::vector<NUM_DATA_TYPE> ind(indicators_buffer->m_cpu_data, type, len);
-		viennacl::vector<int> substitutions(subst_buffer_buffer->m_cpu_data, type, k);
-		viennacl::vector<NUM_DATA_TYPE> destination(dst_buffer->m_cpu_data, type, k*rows);
-		viennacl::kernel& permute = ctx->hsa_context().get_kernel("fjlt", "permute");
+		viennacl::vector<NUM_DATA_TYPE> src((NUM_DATA_TYPE*)source_buffer->m_cpu_data, type,n*rows);
+		viennacl::vector<NUM_DATA_TYPE> p2((NUM_DATA_TYPE*)p2_buffer->m_cpu_data,  type, len);
+		viennacl::vector<NUM_DATA_TYPE> temp((NUM_DATA_TYPE*)temp_buffer->m_cpu_data, type, len);
+		viennacl::vector<NUM_DATA_TYPE> ind((NUM_DATA_TYPE*)indicators_buffer->m_cpu_data, type, len);
+		viennacl::vector<int> substitutions((int*)subst_buffer_buffer->m_cpu_data, type, k);
+		viennacl::vector<NUM_DATA_TYPE> destination((NUM_DATA_TYPE*)dst_buffer->m_cpu_data, type, k*rows);
+		viennacl::kernel& permute = const_cast<viennacl::hsa::context&>(ctx->hsa_context()).get_kernel("fjlt", "permute");
 		permute.local_work_size(0, 256);
 		permute.global_work_size(0, 256 * 40);
 		for (int i = 0; i < rows; ++i)

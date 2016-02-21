@@ -14,6 +14,8 @@ struct native_buffer
 	{
 		m_cpu_data = 0;
 #ifdef VIENNACL_WITH_OPENCL
+		mode = 0;
+		m_event = 0;
 		m_data = 0;
 		m_data_host_ptr = 0;
 #endif
@@ -34,14 +36,17 @@ struct native_buffer
 		{
 			if (m_data)
 				throw std::runtime_error("Memory Corruption");
-			delete m_cpu_data;
+			free(m_cpu_data);
 			m_cpu_data = 0;
 		}
 
 	}
-
+	
+	
 	void *m_cpu_data;
 #ifdef VIENNACL_WITH_OPENCL
+	int mode;
+	cl_event m_event;
 	cl_mem m_data;
 	void *m_data_host_ptr;
 #endif
