@@ -306,16 +306,16 @@ JNIEXPORT void JNICALL Java_org_viennacl_binding_Buffer_map__I
 		*/
 		cl_map_flags flag_mode = GetMode(mode);
 		cl_int err;
-		if (flag_mode & CL_MAP_READ)
+		/*if (flag_mode & CL_MAP_READ)
 		{
 			err = clEnqueueReadBuffer(queue, ptr->m_data, true, 0, size, ptr->m_data_host_ptr, 0, 0, 0);
 		}
 		else
 			err = CL_SUCCESS;
-
+		*/
 		ptr->m_cpu_data = ptr->m_data_host_ptr;
 		ptr->mode = flag_mode;
-		//ptr->m_cpu_data = clEnqueueMapBuffer(queue, ptr->m_data, true, flag_mode, 0, size, 0, 0, 0, &err);
+		ptr->m_cpu_data = clEnqueueMapBuffer(queue, ptr->m_data, true, flag_mode, 0, size, 0, 0, 0, &err);
 		if (err == CL_SUCCESS)
 			SetCPUMemoryField(env, obj, ptr->m_cpu_data);
 		else
@@ -374,15 +374,8 @@ JNIEXPORT void JNICALL Java_org_viennacl_binding_Buffer_map__IJJ
 
 		cl_map_flags flag_mode = GetMode(mode);
 		cl_int err;
-		if (flag_mode & CL_MAP_READ)
-		{
-			err = clEnqueueReadBuffer(queue, ptr->m_data, true, offset, size, ptr->m_data_host_ptr, 0, 0, 0);
-		}
-		else
-			err = CL_SUCCESS;
-		ptr->m_cpu_data = ptr->m_data_host_ptr;
 		ptr->mode = flag_mode;
-		//ptr->m_cpu_data = clEnqueueMapBuffer(queue, ptr->m_data, true, flag_mode, offset, size, 0, 0, 0, &err);
+		ptr->m_cpu_data = clEnqueueMapBuffer(queue, ptr->m_data, true, flag_mode, offset, size, 0, 0, 0, &err);
 		if (err == CL_SUCCESS)
 			SetCPUMemoryField(env, obj, ptr->m_cpu_data);
 		else
@@ -421,7 +414,7 @@ JNIEXPORT void JNICALL Java_org_viennacl_binding_Buffer_commit
 		viennacl::ocl::command_queue& queue = ctx->opencl_context().get_queue();
 		cl_int err = CL_SUCCESS;
 		if (ptr->mode | CL_MAP_WRITE)
-			err = clEnqueueWriteBuffer(queue.handle().get(), ptr->m_data, true, 0, size, ptr->m_cpu_data, 0, 0, 0);
+			err = clEnqueueUnmapMemObject(queue.handle().get(), ptr->m_data, ptr->m_cpu_data, 0, 0, 0);
 		if (err != CL_SUCCESS)
 			throw std::runtime_error("failed to write buffer");
 		
@@ -463,13 +456,9 @@ JNIEXPORT void JNICALL Java_org_viennacl_binding_Buffer_allocate
 
 		viennacl::context* ctx = GetContext(env, obj, context_field);
 		cl_context raw_context = ctx->opencl_context().handle().get();
-		ptr->m_data_host_ptr = 0;
-		ptr->m_data_host_ptr = malloc(size);
-		memset(ptr->m_data_host_ptr, 0, size);
-		ptr->m_data = clCreateBuffer(raw_context, (GetMemMode(GetBufferMode(env,obj))) /*| CL_MEM_USE_HOST_PTR*/, size, NULL, &err);
+		ptr->m_data = clCreateBuffer(raw_context, (GetMemMode(GetBufferMode(env,obj))) | CL_MEM_ALLOC_HOST_PTR, size, NULL, &err);
 		if (ptr->m_data == 0)
 		{
-			free( ptr->m_data_host_ptr);
 			ptr->m_data_host_ptr = 0;
 			throw std::runtime_error("Buffer allocation failed");
 		}
