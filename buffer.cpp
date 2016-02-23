@@ -191,7 +191,7 @@ JNIEXPORT void JNICALL Java_org_viennacl_binding_Buffer_fill__B
 		jobject queue_object = env->GetObjectField(obj, queue_field);
 
 		viennacl::context* ctx = GetContext(env, obj, context_field);
-		cl_context raw_context = ctx->opencl_context().handle().get();
+		//cl_context raw_context = ctx->opencl_context().handle().get();
 		struct _cl_command_queue* queue = 0;
 		if (queue_object != 0)
 		{
@@ -419,8 +419,11 @@ JNIEXPORT void JNICALL Java_org_viennacl_binding_Buffer_commit
 		viennacl::context* ctx = GetContext(env, obj, context_field);
 		cl_context raw_context = ctx->opencl_context().handle().get();
 		viennacl::ocl::command_queue& queue = ctx->opencl_context().get_queue();
+		cl_int err = CL_SUCCESS;
 		if (ptr->mode | CL_MAP_WRITE)
-			clEnqueueWriteBuffer(queue.handle().get(), ptr->m_data, true, 0, size, ptr->m_cpu_data, 0, 0, 0);
+			err = clEnqueueWriteBuffer(queue.handle().get(), ptr->m_data, true, 0, size, ptr->m_cpu_data, 0, 0, 0);
+		if (err != CL_SUCCESS)
+			throw std::runtime_error("failed to write buffer");
 		
 
 		SetCPUMemoryField(env, obj, 0);
@@ -466,7 +469,8 @@ JNIEXPORT void JNICALL Java_org_viennacl_binding_Buffer_allocate
 		ptr->m_data = clCreateBuffer(raw_context, (GetMemMode(GetBufferMode(env,obj))) /*| CL_MEM_USE_HOST_PTR*/, size, NULL, &err);
 		if (ptr->m_data == 0)
 		{
-			delete ptr->m_data_host_ptr;
+			free( ptr->m_data_host_ptr);
+			ptr->m_data_host_ptr = 0;
 			throw std::runtime_error("Buffer allocation failed");
 		}
 			
@@ -503,9 +507,6 @@ JNIEXPORT void JNICALL Java_org_viennacl_binding_Buffer_allocate
 JNIEXPORT void JNICALL Java_org_viennacl_binding_Buffer_release__
 (JNIEnv * env, jobject obj)
 {
-	// use normal map/unmap to make sure that all pending kernel operations are done
-	Java_org_viennacl_binding_Buffer_map__IJJ(env, obj, 2, 0, 1);
-	Java_org_viennacl_binding_Buffer_commit(env, obj);
 
 #ifdef VIENNACL_WITH_HSA
 	int mem_type = GetMemType(env, obj);
