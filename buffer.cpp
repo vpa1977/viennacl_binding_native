@@ -87,16 +87,16 @@ JNIEXPORT void JNICALL Java_org_viennacl_binding_Buffer_native_1copy__Lorg_vienn
 	native_buffer * src = jni_setup::GetNativeImpl<native_buffer>(env, obj, "org/viennacl/binding/Buffer");
 	native_buffer * dst = jni_setup::GetNativeImpl<native_buffer>(env, target, "org/viennacl/binding/Buffer");
 	int mem_type = GetMemType(env, obj);
+	static jclass container_class = env->GetObjectClass(obj);
+	static jfieldID context_field = env->GetFieldID(container_class, "m_context", "Lorg/viennacl/binding/Context;");
+	viennacl::context* ctx = GetContext(env, obj, context_field);
 #ifdef VIENNACL_WITH_OPENCL
 	if (mem_type == JAVA_BIND_OPENCL_MEMORY)
 	{
-		static jclass container_class = env->GetObjectClass(obj);
-		static jfieldID context_field = env->GetFieldID(container_class, "m_context", "Lorg/viennacl/binding/Context;");
 		static jfieldID queue_field = env->GetFieldID(container_class, "m_queue", "Lorg/viennacl/binding/Queue;");
 
 		jobject queue_object = env->GetObjectField(obj, queue_field);
 
-		viennacl::context* ctx = GetContext(env, obj, context_field);
 		cl_context raw_context = ctx->opencl_context().handle().get();
 		struct _cl_command_queue* queue = 0;
 		if (queue_object != 0)
@@ -120,6 +120,12 @@ JNIEXPORT void JNICALL Java_org_viennacl_binding_Buffer_native_1copy__Lorg_vienn
 
 		if (src->m_data || dst->m_data)
 			throw std::runtime_error("Memory Corruption!");
+#ifdef VIENNACL_WITH_HSA
+	if (mem_type == JAVA_BIND_HSA_MEMORY)
+	{
+		const_cast<viennacl::hsa::context&>(ctx->hsa_context()).get_queue().finish();
+	}
+#endif
 
 		memcpy(dst->m_cpu_data, (char*)(src->m_cpu_data)+offset, length);
 	}
@@ -137,16 +143,17 @@ JNIEXPORT void JNICALL Java_org_viennacl_binding_Buffer_native_1copy_1to
 	native_buffer * dst = jni_setup::GetNativeImpl<native_buffer>(env, target, "org/viennacl/binding/Buffer");
 	int mem_type = GetMemType(env, obj);
 	jlong length = GetByteSize(env, obj);
+	static jclass container_class = env->GetObjectClass(obj);
+	static jfieldID context_field = env->GetFieldID(container_class, "m_context", "Lorg/viennacl/binding/Context;");
+	viennacl::context* ctx = GetContext(env, obj, context_field);
+
 #ifdef VIENNACL_WITH_OPENCL
 	if (mem_type == JAVA_BIND_OPENCL_MEMORY)
 	{
-		static jclass container_class = env->GetObjectClass(obj);
-		static jfieldID context_field = env->GetFieldID(container_class, "m_context", "Lorg/viennacl/binding/Context;");
 		static jfieldID queue_field = env->GetFieldID(container_class, "m_queue", "Lorg/viennacl/binding/Queue;");
 
 		jobject queue_object = env->GetObjectField(obj, queue_field);
 
-		viennacl::context* ctx = GetContext(env, obj, context_field);
 		cl_context raw_context = ctx->opencl_context().handle().get();
 		struct _cl_command_queue* queue = 0;
 		if (queue_object != 0)
@@ -170,6 +177,12 @@ JNIEXPORT void JNICALL Java_org_viennacl_binding_Buffer_native_1copy_1to
 
 		if (src->m_data || dst->m_data)
 			throw std::runtime_error("Memory Corruption!");
+#ifdef VIENNACL_WITH_HSA
+	if (mem_type == JAVA_BIND_HSA_MEMORY)
+	{
+		const_cast<viennacl::hsa::context&>(ctx->hsa_context()).get_queue().finish();
+	}
+#endif
 
 		memcpy((char*)(dst->m_cpu_data)+target_offset, (char*)(src->m_cpu_data), length);
 	}
@@ -181,16 +194,16 @@ JNIEXPORT void JNICALL Java_org_viennacl_binding_Buffer_fill__B
 	jlong size = GetByteSize(env, obj);
 	native_buffer * src = jni_setup::GetNativeImpl<native_buffer>(env, obj, "org/viennacl/binding/Buffer");
 	int mem_type = GetMemType(env, obj);
+	static jclass container_class = env->GetObjectClass(obj);
+	static jfieldID context_field = env->GetFieldID(container_class, "m_context", "Lorg/viennacl/binding/Context;");
+	viennacl::context* ctx = GetContext(env, obj, context_field);
 #ifdef VIENNACL_WITH_OPENCL
 	if (mem_type == JAVA_BIND_OPENCL_MEMORY)
 	{
-		static jclass container_class = env->GetObjectClass(obj);
-		static jfieldID context_field = env->GetFieldID(container_class, "m_context", "Lorg/viennacl/binding/Context;");
 		static jfieldID queue_field = env->GetFieldID(container_class, "m_queue", "Lorg/viennacl/binding/Queue;");
 
 		jobject queue_object = env->GetObjectField(obj, queue_field);
 
-		viennacl::context* ctx = GetContext(env, obj, context_field);
 		//cl_context raw_context = ctx->opencl_context().handle().get();
 		struct _cl_command_queue* queue = 0;
 		if (queue_object != 0)
@@ -211,6 +224,12 @@ JNIEXPORT void JNICALL Java_org_viennacl_binding_Buffer_fill__B
 	{
 		if (src->m_data)
 			throw std::runtime_error("Memory Corruption!");
+#ifdef VIENNACL_WITH_HSA
+	if (mem_type == JAVA_BIND_HSA_MEMORY)
+	{
+		const_cast<viennacl::hsa::context&>(ctx->hsa_context()).get_queue().finish();
+	}
+#endif
 
 		memset(src->m_cpu_data, b, size);
 	}
@@ -227,16 +246,17 @@ JNIEXPORT void JNICALL Java_org_viennacl_binding_Buffer_fill__BJ
 	jlong size = len;
 	native_buffer * src = jni_setup::GetNativeImpl<native_buffer>(env, obj, "org/viennacl/binding/Buffer");
 	int mem_type = GetMemType(env, obj);
+	static jclass container_class = env->GetObjectClass(obj);
+	static jfieldID context_field = env->GetFieldID(container_class, "m_context", "Lorg/viennacl/binding/Context;");
+	viennacl::context* ctx = GetContext(env, obj, context_field);
+
 #ifdef VIENNACL_WITH_OPENCL
 	if (mem_type == JAVA_BIND_OPENCL_MEMORY)
 	{
-		static jclass container_class = env->GetObjectClass(obj);
-		static jfieldID context_field = env->GetFieldID(container_class, "m_context", "Lorg/viennacl/binding/Context;");
 		static jfieldID queue_field = env->GetFieldID(container_class, "m_queue", "Lorg/viennacl/binding/Queue;");
 
 		jobject queue_object = env->GetObjectField(obj, queue_field);
 
-		viennacl::context* ctx = GetContext(env, obj, context_field);
 		cl_context raw_context = ctx->opencl_context().handle().get();
 		struct _cl_command_queue* queue = 0;
 		if (queue_object != 0)
@@ -258,6 +278,12 @@ JNIEXPORT void JNICALL Java_org_viennacl_binding_Buffer_fill__BJ
 	{
 		if (src->m_data)
 			throw std::runtime_error("Memory Corruption!");
+#ifdef VIENNACL_WITH_HSA
+	if (mem_type == JAVA_BIND_HSA_MEMORY)
+	{
+		const_cast<viennacl::hsa::context&>(ctx->hsa_context()).get_queue().finish();
+	}
+#endif
 
 		memset(src->m_cpu_data, b, size);
 	}

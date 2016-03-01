@@ -189,6 +189,7 @@
     <ClCompile Include="merge_sort_util.cpp" />
     <ClCompile Include="morton.cpp" />
     <ClCompile Include="operations.cpp" />
+    <ClCompile Include="sgd_cpu_weight_update.cpp" />
     <ClCompile Include="stdafx.cpp" />
     <ClCompile Include="utils.cpp" />
     <ClCompile Include="viennacl-java-binding.cpp" />

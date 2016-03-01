@@ -198,3 +198,5 @@ JNIEXPORT void JNICALL Java_org_moa_opencl_sgd_Multinominal_computeReduction
 	}
 
 }
+
+

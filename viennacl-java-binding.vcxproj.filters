@@ -71,5 +71,8 @@
     <ClCompile Include="operations.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="sgd_cpu_weight_update.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
 </Project>

@@ -118,9 +118,15 @@ JNIEXPORT void JNICALL Java_org_viennacl_binding_Context_init
 					ptr->opencl_context().switch_device(dev.at(i));
 					break;
 				}
-
 			}
 		}
+
+		viennacl::ocl::context other = ptr->opencl_context();
+
+		ptr->opencl_context().add_queue(ptr->opencl_context().devices().at(0).id());
+		viennacl::ocl::command_queue& q =  ptr->opencl_context().get_queue(ptr->opencl_context().devices().at(0).id(), 1);
+		ptr->opencl_context().switch_queue(q);
+
 		std::cout << "Using device " << ptr->opencl_context().current_device().name() << std::endl; 
 	}
 		break;
@@ -146,6 +152,45 @@ JNIEXPORT void JNICALL Java_org_viennacl_binding_Context_init
 	}
 	jni_setup::Init<viennacl::context>(ptr, env, context_wrapper, "org/viennacl/binding/Context");
 
+}
+
+/*
+* Class:     org_viennacl_binding_Context
+* Method:    createCompatibleContext
+* Signature: ()Lorg/viennacl/binding/Context;
+*/
+JNIEXPORT jobject JNICALL Java_org_viennacl_binding_Context_createCompatibleContext
+(JNIEnv * env, jobject obj)
+{
+	viennacl::context* ctx = jni_setup::GetNativeImpl<viennacl::context>(env, obj, "org/viennacl/binding/Context");
+	viennacl::context* ptr;
+	switch (ctx->memory_type())
+	{
+	case viennacl::MAIN_MEMORY:
+		ptr = new viennacl::context(viennacl::MAIN_MEMORY);
+		break;
+#ifdef VIENNACL_WITH_OPENCL
+	case viennacl::OPENCL_MEMORY:
+	{
+		throw std::runtime_error("Unsupported memory type");
+	}
+	break;
+#endif
+#ifdef VIENNACL_WITH_HSA
+	case viennacl::HSA_MEMORY:
+	{
+		throw std::runtime_error("Unsupported memory type");
+	}
+	break;
+#endif
+	default:
+		throw std::runtime_error("Unsupported memory type");
+	}
+	static jclass _class = env->FindClass("org/viennacl/binding/Context");
+	static jmethodID methodID = env->GetMethodID(_class, "<init>", "()V");
+	jobject compat_context = env->NewObject(_class, methodID);
+	jni_setup::Init<viennacl::context>(ptr, env, compat_context, "org/viennacl/binding/Context");
+	return compat_context;
 }
 
 /*
