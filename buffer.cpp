@@ -7,8 +7,32 @@
 #include "org_viennacl_binding_Context.h"
 #include "org_viennacl_binding_Buffer.h"
 #include "jni_viennacl_context.h"
+#include "org_viennacl_binding_MappedFile.h"
+
+#ifdef UNIX
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <sys/types.h>
+#include <sys/ipc.h>
+#include <sys/shm.h>
+#include <sys/stat.h>
+#endif
 
 #pragma warning (disable:4297)
+
+// todo move to shared code
+static void GetJStringContent(JNIEnv *AEnv, jstring AStr, std::string &ARes) {
+	if (!AStr) {
+		ARes.clear();
+		return;
+	}
+
+	const char *s = AEnv->GetStringUTFChars(AStr, NULL);
+	ARes = s;
+	AEnv->ReleaseStringUTFChars(AStr, s);
+}
+
 
 cl_map_flags GetMode(jint mode)
 {
@@ -561,4 +585,71 @@ JNIEXPORT void JNICALL Java_org_viennacl_binding_Buffer_release__J
 #endif
 	jni_setup::Release<native_buffer>(env, obj, "org/viennacl/binding/Buffer");
 }
+
+static int file_exist (const char *filename)
+{
+  struct stat   buffer;
+  return (stat (filename, &buffer) == 0);
+}
+
+
+/*
+ * Class:     org_viennacl_binding_MappedFile
+ * Method:    nativeAttach
+ * Signature: (Ljava/lang/String;J)J
+ */
+JNIEXPORT jlong JNICALL Java_org_viennacl_binding_MappedFile_nativeAttach
+  (JNIEnv *env, jobject, jstring jkey, jlong size)
+{
+	std::string key;
+	GetJStringContent(env, jkey, key);
+#ifdef UNIX
+	key_t s_key;
+    int shmid;
+    void *data;
+    int mode;
+	if ((s_key = ftok(key.c_str(), 'R')) == -1) {
+			perror("ftok");
+			exit(-1);
+	}
+
+	if ((shmid = shmget(s_key, size, 0666  | IPC_CREAT)) == -1) {
+		printf("failed to get %d  ", size);
+		perror("shmget");
+		exit(-1);
+	}
+
+
+	data = shmat(shmid, (void *)0, 0);
+	shmctl(shmid, IPC_RMID, NULL);
+	if (data == (char *)(-1)) {
+		perror("shmat");
+		exit(1);
+	}
+	return (jlong) data;
+
+#else
+	throw std::runtime_error("not implemented");
+#endif
+}
+
+/*
+ * Class:     org_viennacl_binding_MappedFile
+ * Method:    nativeDetach
+ * Signature: (J)V
+ */
+JNIEXPORT void JNICALL Java_org_viennacl_binding_MappedFile_nativeDetach
+  (JNIEnv *, jobject, jlong addr)
+{
+#ifdef UNIX
+	if (shmdt((char*)addr) == -1) {
+	        perror("shmdt");
+	        exit(1);
+	    }
+#else
+	throw std::runtime_error("not implemented");
+#endif
+
+}
+
 

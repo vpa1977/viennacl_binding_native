@@ -15,11 +15,47 @@
 #include "jni_viennacl_context.h"
 #include "org_moa_opencl_sgd_DirectUpdater.h"
 #include "org_moa_opencl_sgd_OneBitUpdater.h"
+#include "org_moa_opencl_sgd_SharedSemaphores.h"
+
+#include <viennacl/vector.hpp>
 
 JNIEXPORT void JNICALL Java_org_moa_opencl_sgd_DirectUpdater_nativeAtomicUpdate
 (JNIEnv * env, jobject obj, jlong gradient, jlong weight, jint count, jdouble learning_rate)
 {
+
+#ifdef VIENNACL_WITH_HSA___
+	hsa_status_t status;
+	status = hsa_memory_register((void*)gradient, count * sizeof(double));
+	if (status != HSA_STATUS_SUCCESS)
+		throw std::runtime_error("memory management");
+	hsa_memory_register((void*)weight, count * sizeof(double));
+	if (status != HSA_STATUS_SUCCESS)
+		throw std::runtime_error("memory management");
+	viennacl::vector<NUM_DATA_TYPE> vgr((NUM_DATA_TYPE*)gradient, viennacl::HSA_MEMORY, count);
+	viennacl::vector<NUM_DATA_TYPE> vweight((NUM_DATA_TYPE*)weight, viennacl::HSA_MEMORY, count);
+	viennacl::hsa::kernel& simple_update = viennacl::hsa::current_context().get_kernel("1bitsgd_update", "sgd_replace_update");
+	simple_update.local_work_size(0, 128);
+	simple_update.global_work_size(0, 128*20);
+	viennacl::hsa::enqueue(
+			simple_update(
+					count,
+					vweight,
+					vgr,
+					learning_rate
+			)
+	);
+	status= hsa_memory_deregister((void*)gradient, count * sizeof(double));
+	if (status != HSA_STATUS_SUCCESS)
+		throw std::runtime_error("memory management");
+	status = hsa_memory_deregister((void*)weight, count * sizeof(double));
+	if (status != HSA_STATUS_SUCCESS)
+		throw std::runtime_error("memory management");
+
+#else
+
+#ifndef UNIX
 	std::_Atomic_impl<8U> func;
+#endif
 	double * gradient_ptr = (double*)gradient;
 	double*  weight_ptr = (double*)weight;
 	for (int i = 0; i < count; ++i)
@@ -27,12 +63,22 @@ JNIEXPORT void JNICALL Java_org_moa_opencl_sgd_DirectUpdater_nativeAtomicUpdate
 		double temp; 
 		if (gradient_ptr[i] != 0.0)
 		{
+#ifndef UNIX
 			func._Load(&temp, &weight_ptr[i], std::memory_order_acquire);
+#else
+			__atomic_load((volatile long*)&weight_ptr[i], (long*)&temp, __ATOMIC_RELAXED);
+#endif
 			temp += gradient_ptr[i] *learning_rate;
+#ifndef UNIX
 			func._Store(&weight_ptr[i], &temp, std::memory_order_release);
+#else
+			__atomic_store((volatile long*)&weight_ptr[i],(long*)&temp, __ATOMIC_RELAXED);
+#endif
+
 			//weight_ptr[i] += gradient_ptr[i] * learning_rate;
 		}
 	}
+#endif
 }
 
 
@@ -51,7 +97,33 @@ JNIEXPORT void JNICALL Java_org_moa_opencl_sgd_OneBitUpdater_nativeComputeUpdate
 	NUM_DATA_TYPE* gradients = (NUM_DATA_TYPE*)g;
 	long * weights_delta = (long*)wd;
 	NUM_DATA_TYPE* Tau = (NUM_DATA_TYPE*)tau;
+#ifdef VIENNACL_WITH_HSA__
+
+	viennacl::vector<NUM_DATA_TYPE> vgr(gradients, viennacl::HSA_MEMORY, 1);
+	viennacl::vector<NUM_DATA_TYPE> vTau(Tau, viennacl::HSA_MEMORY, 1);
+	viennacl::vector<NUM_DATA_TYPE> vEs(Es, viennacl::HSA_MEMORY, 1);
+	viennacl::vector<NUM_DATA_TYPE> vEl(El, viennacl::HSA_MEMORY, 1);
+	viennacl::vector<long> vw(weights_delta, viennacl::HSA_MEMORY, 1);
+
+	viennacl::hsa::kernel& simple_update = viennacl::hsa::current_context().get_kernel("1bitsgd_update", "simple_update");
+	simple_update.local_work_size(0, 128);
+	simple_update.global_work_size(0, 128*20);
+	simple_update.local_work_size(1, 1);
+    simple_update.global_work_size(1, num_classes);
+	viennacl::hsa::enqueue(
+			simple_update(
+					vgr,
+					num_classes,
+					num_attributes,
+					vTau,
+					vEs,
+					vEl,
+					vw,
+					worker_id
+			)
+	);
 	
+#else
 	for (int row = 0; row < num_classes; ++row)
 	{
 		int error_offset = worker_id*num_classes *num_attributes + num_attributes*row;
@@ -66,7 +138,14 @@ JNIEXPORT void JNICALL Java_org_moa_opencl_sgd_OneBitUpdater_nativeComputeUpdate
 				long upd = 1;
 				if (gradient < 0)
 					upd = -1;
+#ifndef UNIX
 				InterlockedAdd(&weights_delta[row * num_attributes + column], upd);
+#else
+				if (gradient > 0)
+					__atomic_add_fetch(&weights_delta[row * num_attributes + column], 1,__ATOMIC_SEQ_CST);
+				else
+					__atomic_sub_fetch(&weights_delta[row * num_attributes + column], 1, __ATOMIC_SEQ_CST);
+#endif
 				abs_grad -= Tau[column];
 				El[error_offset + column] = ((gradient > 0) - (gradient < 0))*abs_grad;
 				Es[error_offset + column] = 0;
@@ -77,8 +156,8 @@ JNIEXPORT void JNICALL Java_org_moa_opencl_sgd_OneBitUpdater_nativeComputeUpdate
 				Es[error_offset + column] = gradient;
 			}
 		}
-
 	}
+#endif
 }
 
 //private native void nativeComputeWeight(long weight, long tau, long delta, double rate);
@@ -129,4 +208,25 @@ JNIEXPORT void JNICALL Java_org_moa_opencl_sgd_OneBitUpdater_nativeUpdateTau
 
 		Tau[j] = (sumR - sumL) / 2;
 	}
+}
+
+
+
+JNIEXPORT void JNICALL Java_org_moa_opencl_sgd_SharedSemaphores_nativeSet
+  (JNIEnv *, jobject, jlong addr, jint offset, jint value)
+{
+	char* ptr = (char*)addr;
+	ptr[offset] = value;
+}
+
+/*
+ * Class:     org_moa_opencl_sgd_SharedSemaphores
+ * Method:    nativeGet
+ * Signature: (JI)I
+ */
+JNIEXPORT jint JNICALL Java_org_moa_opencl_sgd_SharedSemaphores_nativeGet
+  (JNIEnv *, jobject, jlong addr, jint offset)
+{
+	char* ptr = (char*)addr;
+	return ptr[offset];
 }

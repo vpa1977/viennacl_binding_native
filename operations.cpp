@@ -159,11 +159,26 @@ JNIEXPORT void JNICALL Java_org_moa_opencl_sgd_Multinominal_computeDotProducts__
 	native_buffer* margins_buffer = jni_setup::GetNativeImpl<native_buffer>(env, margins, "org/viennacl/binding/Buffer");
 	if (ctx->memory_type() == viennacl::OPENCL_MEMORY)
 	{
+#ifdef VIENNACL_WITH_OPENCL
 		viennacl::matrix<NUM_DATA_TYPE> instance_info(elements_buffer->m_data, rows, columns);
 		viennacl::matrix<NUM_DATA_TYPE, viennacl::column_major> weights_info(weights_buffer->m_data, columns, num_classes);
 		viennacl::matrix<NUM_DATA_TYPE> margin_info(margins_buffer->m_data, rows, num_classes);
 		margin_info = viennacl::linalg::prod(instance_info, weights_info);
+#endif
 	}
+	else
+	if (ctx->memory_type() == viennacl::HSA_MEMORY)
+	{
+#ifdef VIENNACL_WITH_HSA
+		viennacl::matrix<NUM_DATA_TYPE> instance_info((NUM_DATA_TYPE*)elements_buffer->m_cpu_data, viennacl::HSA_MEMORY, rows, columns);
+		viennacl::matrix<NUM_DATA_TYPE, viennacl::column_major> weights_info((NUM_DATA_TYPE*)weights_buffer->m_cpu_data,viennacl::HSA_MEMORY, columns, num_classes);
+		viennacl::matrix<NUM_DATA_TYPE> margin_info((NUM_DATA_TYPE*)margins_buffer->m_cpu_data,viennacl::HSA_MEMORY, rows, num_classes);
+		margin_info = viennacl::linalg::prod(instance_info, weights_info);
+#endif
+	}
+	else
+		throw std::runtime_error("unsupported");
+
 }
 
 
@@ -196,6 +211,8 @@ JNIEXPORT void JNICALL Java_org_moa_opencl_sgd_Multinominal_computeReduction
 
 #endif
 	}
+	else
+		throw std::runtime_error("unsupported");
 
 }
 
