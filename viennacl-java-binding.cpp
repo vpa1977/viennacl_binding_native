@@ -120,12 +120,7 @@ JNIEXPORT void JNICALL Java_org_viennacl_binding_Context_init
 				}
 			}
 		}
-
-		viennacl::ocl::context other = ptr->opencl_context();
-
-		ptr->opencl_context().add_queue(ptr->opencl_context().devices().at(0).id());
-		viennacl::ocl::command_queue& q =  ptr->opencl_context().get_queue(ptr->opencl_context().devices().at(0).id(), 1);
-		ptr->opencl_context().switch_queue(q);
+			
 
 		std::cout << "Using device " << ptr->opencl_context().current_device().name() << std::endl; 
 	}

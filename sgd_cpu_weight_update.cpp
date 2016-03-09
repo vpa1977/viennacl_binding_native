@@ -1,9 +1,22 @@
-#include <jni.h>
-#include "stdafx.h"
-#include "viennacl-java-binding.h"
 #include <viennacl/forwards.h>
 #include <viennacl/context.hpp>
 #include <viennacl/abstract_kernel.hpp>
+#include <viennacl/vector.hpp>
+#include <viennacl/matrix.hpp>
+#include <viennacl/matrix_proxy.hpp>
+#include <viennacl/compressed_matrix.hpp>
+#include <viennacl/linalg/sparse_matrix_operations.hpp>
+#include <viennacl/linalg/sum.hpp>
+
+#include <viennacl/linalg/matrix_operations.hpp>
+#include <viennacl/linalg/vector_operations.hpp>
+#include <viennacl/linalg/norm_2.hpp>
+#include <viennacl/fft.hpp>
+#include <stdint.h>
+
+#include <jni.h>
+#include "stdafx.h"
+#include "viennacl-java-binding.h"
 #include <stdint.h>
 #include <atomic>
 

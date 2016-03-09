@@ -16,7 +16,6 @@
 #include "org_moa_opencl_util_MortonCode.h"
 
 
-
 std::vector<uint8_t> create_morton_code_byte(int total_dims, int dim, int byte)
 {
 	std::vector<uint8_t> lookup(total_dims);
@@ -27,6 +26,8 @@ std::vector<uint8_t> create_morton_code_byte(int total_dims, int dim, int byte)
 		int total_shift = (dim_in_code * (total_dims - 1) + dim);
 		int pos = total_shift >> 3;
 		int byte_shift = total_shift - (pos << 3);
+		// reverse byte shift
+		//byte_shift = 6 - byte_shift;
 		byte_entry = byte_entry << byte_shift;
 		lookup[pos] |= byte_entry & 0xFF;
 		if ((byte_entry & 0xFF00))
@@ -34,7 +35,6 @@ std::vector<uint8_t> create_morton_code_byte(int total_dims, int dim, int byte)
 	}
 	return lookup;
 }
-
 
 
 JNIEXPORT void JNICALL Java_org_moa_opencl_util_MortonCode_init
